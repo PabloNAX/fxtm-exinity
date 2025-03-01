@@ -19,13 +19,13 @@ class MockFinhubService implements FinnhubService {
     'OANDA:EUR_JPY': 167.05,
   };
 
-  // Volatility for different time intervals
+  // Volatility for different time intervals - INCREASED for better visualization
   final Map<String, double> _volatilityByResolution = {
-    '15': 0.0005, // 15 minutes
-    '60': 0.0010, // 1 hour
-    '240': 0.0020, // 4 hours
-    'D': 0.0035, // 1 day
-    'W': 0.0080, // 1 week
+    '15': 0.0015, // 15 minutes - increased volatility
+    '60': 0.0025, // 1 hour - increased volatility
+    '240': 0.0040, // 4 hours - increased volatility
+    'D': 0.0060, // 1 day - increased volatility
+    'W': 0.0120, // 1 week - increased volatility
   };
 
   @override
@@ -130,50 +130,97 @@ class MockFinhubService implements FinnhubService {
 
     // Create trend (upward, downward, or sideways)
     double trendDirection = _random.nextDouble() * 2 - 1; // from -1 to 1
-    double trendStrength = _random.nextDouble() * 0.5; // from 0 to 0.5
+    double trendStrength =
+        _random.nextDouble() * 0.7; // from 0 to 0.7 (increased)
 
-    for (int i = dataPoints - 1; i >= 0; i--) {
-      final date = now.subtract(interval * i);
-      timestamps.add(date.millisecondsSinceEpoch ~/ 1000);
+    // For 15-minute charts, create more pronounced price movements
+    if (resolution == '15') {
+      // Create a more volatile pattern for 15-minute charts
+      List<double> priceChanges = [];
 
-      // Add random change with trend
-      double change = (trendDirection * trendStrength * volatility) +
-          ((_random.nextDouble() * 2 - 1) * volatility);
-
-      // For realism, add small correlation with previous value
-      if (i < dataPoints - 1) {
-        // If previous change was positive, there's a small chance of continuing the trend
-        if (closes.last > opens.last && _random.nextDouble() < 0.6) {
-          change = change.abs();
-        }
-        // If previous change was negative, there's a small chance of continuing the trend
-        else if (closes.last < opens.last && _random.nextDouble() < 0.6) {
-          change = -change.abs();
-        }
+      // Generate a pattern of price changes
+      for (int i = 0; i < dataPoints; i++) {
+        // Create a wave-like pattern with some randomness
+        double wave = sin(i * 0.2) * 0.0025; // Sine wave pattern
+        double random =
+            (_random.nextDouble() * 2 - 1) * 0.002; // Random component
+        priceChanges.add(wave + random);
       }
 
-      double open = lastClose;
-      double close = open * (1 + change);
+      for (int i = dataPoints - 1; i >= 0; i--) {
+        final date = now.subtract(interval * i);
+        timestamps.add(date.millisecondsSinceEpoch ~/ 1000);
 
-      // Create realistic high and low
-      double high =
-          max(open, close) * (1 + _random.nextDouble() * volatility * 0.5);
-      double low =
-          min(open, close) * (1 - _random.nextDouble() * volatility * 0.5);
+        double change = priceChanges[dataPoints - 1 - i];
 
-      // Trading volume - higher during larger price movements
-      int volume =
-          1000 + (change.abs() * 100000).toInt() + (_random.nextInt(500));
+        double open = lastClose;
+        double close = open * (1 + change);
 
-      // Save closing value for next candle
-      lastClose = close;
+        // Create realistic high and low
+        double high =
+            max(open, close) * (1 + _random.nextDouble() * volatility * 0.5);
+        double low =
+            min(open, close) * (1 - _random.nextDouble() * volatility * 0.5);
 
-      // Add data to lists
-      opens.add(open);
-      closes.add(close);
-      highs.add(high);
-      lows.add(low);
-      volumes.add(volume);
+        // Trading volume - higher during larger price movements
+        int volume =
+            1000 + (change.abs() * 100000).toInt() + (_random.nextInt(500));
+
+        // Save closing value for next candle
+        lastClose = close;
+
+        // Add data to lists
+        opens.add(open);
+        closes.add(close);
+        highs.add(high);
+        lows.add(low);
+        volumes.add(volume);
+      }
+    } else {
+      // Standard generation for other timeframes
+      for (int i = dataPoints - 1; i >= 0; i--) {
+        final date = now.subtract(interval * i);
+        timestamps.add(date.millisecondsSinceEpoch ~/ 1000);
+
+        // Add random change with trend
+        double change = (trendDirection * trendStrength * volatility) +
+            ((_random.nextDouble() * 2 - 1) * volatility);
+
+        // For realism, add small correlation with previous value
+        if (i < dataPoints - 1) {
+          // If previous change was positive, there's a small chance of continuing the trend
+          if (closes.last > opens.last && _random.nextDouble() < 0.6) {
+            change = change.abs();
+          }
+          // If previous change was negative, there's a small chance of continuing the trend
+          else if (closes.last < opens.last && _random.nextDouble() < 0.6) {
+            change = -change.abs();
+          }
+        }
+
+        double open = lastClose;
+        double close = open * (1 + change);
+
+        // Create realistic high and low
+        double high =
+            max(open, close) * (1 + _random.nextDouble() * volatility * 0.5);
+        double low =
+            min(open, close) * (1 - _random.nextDouble() * volatility * 0.5);
+
+        // Trading volume - higher during larger price movements
+        int volume =
+            1000 + (change.abs() * 100000).toInt() + (_random.nextInt(500));
+
+        // Save closing value for next candle
+        lastClose = close;
+
+        // Add data to lists
+        opens.add(open);
+        closes.add(close);
+        highs.add(high);
+        lows.add(low);
+        volumes.add(volume);
+      }
     }
 
     return CandleDataApiModel(

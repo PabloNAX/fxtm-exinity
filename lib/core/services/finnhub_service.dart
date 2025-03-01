@@ -6,8 +6,12 @@ import 'api_client.dart';
 
 abstract class FinnhubService {
   Future<List<ForexSymbolsApiModel>> fetchForexPairs();
-  Future<CandleDataApiModel> fetchHistoricalData(String symbol,
-      {String resolution});
+  Future<CandleDataApiModel> fetchHistoricalData(
+    String symbol, {
+    String resolution,
+    int? from,
+    int? to,
+  });
 }
 
 class FinnhubServiceImpl implements FinnhubService {
@@ -27,11 +31,12 @@ class FinnhubServiceImpl implements FinnhubService {
           .map((json) => ForexSymbolsApiModel.fromJson(json))
           .toList();
     } catch (e) {
-      throw ForexException('Failed to fetch forex pairs: $e');
+      throw ForexException('Failed to fetch forex pairs: $e',
+          type: ErrorType.unknown);
     }
   }
 
-  @override
+  //TODO Implement Date params for fetchHistoricalData API call
   @override
   Future<CandleDataApiModel> fetchHistoricalData(
     String symbol, {
@@ -58,7 +63,8 @@ class FinnhubServiceImpl implements FinnhubService {
 
       return CandleDataApiModel.fromJson(response.data);
     } catch (e) {
-      throw ForexException('Failed to fetch historical data: $e');
+      throw ForexException('Failed to fetch historical data: $e',
+          type: ErrorType.unknown);
     }
   }
 }

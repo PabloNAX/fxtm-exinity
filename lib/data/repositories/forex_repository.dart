@@ -43,18 +43,27 @@ class ForexRepository {
       await _cacheService.cacheForexPairs(symbols);
       return _convertToForexPairs(symbols);
     } catch (e) {
-      throw ForexException('Failed to get forex pairs: $e');
+      throw ForexException('Failed to get forex pairs: $e',
+          type: ErrorType.unknown);
     }
   }
 
-  Future<List<CandleData>> getHistoricalData(String symbol,
-      {String resolution = 'D'}) async {
+  //TODO Implement Date params for fetchHistoricalData API call
+  Future<List<CandleData>> getHistoricalData(
+    String symbol, {
+    String resolution = 'D',
+    int? from,
+    int? to,
+  }) async {
     try {
-      final candleDataApiModel =
-          await _service.fetchHistoricalData(symbol, resolution: resolution);
+      final candleDataApiModel = await _service.fetchHistoricalData(symbol,
+          resolution: resolution, from: from, to: to);
       return _convertToCandleData(candleDataApiModel);
     } catch (e) {
-      throw ForexException('Failed to get historical data: $e');
+      throw ForexException(
+        'Failed to get historical data: $e',
+        type: ErrorType.unknown,
+      );
     }
   }
 

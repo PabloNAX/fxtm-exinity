@@ -3,6 +3,7 @@ import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'core/services/api_client.dart';
 import 'core/services/cache_service.dart';
+import 'core/services/connectivity_service.dart';
 import 'core/services/finnhub_service.dart';
 import 'core/services/web_socket_client.dart';
 import 'core/services/ws_service.dart';
@@ -23,11 +24,21 @@ void main() async {
   // Инициализация SharedPreferences
   final prefs = await SharedPreferences.getInstance();
 
+  // Инициализация ConnectivityService
+  final connectivityService = ConnectivityService();
+
   // Инициализация сервисов
-  // final apiClient = ApiClient(apiKey: apiKey);
+  final apiClient = ApiClient(
+    apiKey: apiKey,
+    connectivityService: connectivityService,
+  );
+
+  // Инициализация сервисов
   // final finnhubService = FinnhubServiceImpl(apiClient);
 
+  //Mock finhab service
   final finnhubService = MockFinhubService();
+
   final cacheService = CacheService(prefs);
   // Every fresh launch clear the cash to fetch the data from api first
   await cacheService.clearCache();
@@ -41,7 +52,8 @@ void main() async {
   );
 
   // Инициализация WebSocket
-  final wsClient = WebSocketClient(apiToken: apiKey);
+  final wsClient = WebSocketClient(
+      apiToken: apiKey, connectivityService: connectivityService);
   final wsService = WsService(wsClient: wsClient);
 
   runApp(FXTMApp(

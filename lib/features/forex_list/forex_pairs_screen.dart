@@ -32,17 +32,6 @@ class ForexPairsScreen extends StatelessWidget {
               await context.read<ForexPairsCubit>().close();
             },
             child: Scaffold(
-              appBar: AppBar(
-                title: const Text('Валютные пары'),
-                leading: IconButton(
-                  icon: Icon(Icons.arrow_back),
-                  onPressed: () {
-                    // Закрываем кубит при нажатии кнопки назад
-                    context.read<ForexPairsCubit>().close();
-                    Navigator.of(context).pop();
-                  },
-                ),
-              ),
               body: BlocBuilder<ForexPairsCubit, ForexPairsState>(
                 builder: (context, state) {
                   // Проверяем текущее состояние и отображаем соответствующий виджет
@@ -95,14 +84,15 @@ class ForexPairsScreen extends StatelessWidget {
             onTap: () {
               context.read<ForexPairsCubit>().pauseWebSocket().then((_) {
                 Navigator.push(
-                  context, 
+                  context,
                   CupertinoPageRoute(
                     builder: (context) => HistoryPage(
                       forexPair: pair,
                       forexRepository: forexRepository,
                     ),
                   ),
-                ).then((_) => context.read<ForexPairsCubit>().resumeWebSocket());
+                ).then(
+                    (_) => context.read<ForexPairsCubit>().resumeWebSocket());
               });
             },
           );

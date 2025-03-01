@@ -1,4 +1,4 @@
-import 'package:flutter/cupertino.dart';
+// widgets/chart_header.dart
 import 'package:flutter/material.dart';
 
 class ChartHeader extends StatelessWidget {
@@ -21,20 +21,21 @@ class ChartHeader extends StatelessWidget {
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Text(
-                '$symbol Price History',
+                symbol,
                 style: const TextStyle(
                   fontWeight: FontWeight.bold,
-                  fontSize: 18,
+                  fontSize: 24,
                 ),
               ),
-              Text(
-                dateRange,
-                style: const TextStyle(
-                  fontWeight: FontWeight.bold,
-                  fontSize: 14,
-                  color: Colors.grey,
+              if (dateRange.isNotEmpty)
+                Text(
+                  dateRange,
+                  style: const TextStyle(
+                    fontWeight: FontWeight.w400,
+                    fontSize: 14,
+                    color: Colors.grey,
+                  ),
                 ),
-              ),
             ],
           ),
           const Spacer(),

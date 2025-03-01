@@ -8,14 +8,17 @@ import '../../data/models/forex_update_ws_model.dart';
 class WsService {
   final WebSocketClient _wsClient;
   final Map<String, double> _lastPrices = {};
-  
+
   WsService({required WebSocketClient wsClient}) : _wsClient = wsClient;
 
-  void subscribeToSymbols(
+  Future<void> subscribeToSymbols(
     List<String> symbols,
     void Function(ForexPair) onPriceUpdate,
-  ) {
-    final stream = _wsClient.connect();
+  ) async {
+    // final stream = _wsClient.connect();
+    // if (stream == null) return;
+
+    final stream = await _wsClient.connect();
     if (stream == null) return;
 
     stream.listen(
@@ -36,6 +39,15 @@ class WsService {
   void _handleMessage(dynamic message, Function(ForexPair) onPriceUpdate) {
     _logWebSocketMessage(message, prefix: 'RECEIVED');
     try {
+      final Map<String, dynamic> jsonData = jsonDecode(message);
+
+// If we receive a ping, respond with a pong immediately
+      if (jsonData['type'] == 'ping') {
+        _logWebSocketMessage("pong", prefix: 'SENT');
+        _wsClient.send(jsonEncode({'type': 'pong'}));
+        return;
+      }
+
       final update = ForexUpdateWsModel.fromJson(jsonDecode(message));
 
       _logWebSocketMessage(update, prefix: 'PARSED');

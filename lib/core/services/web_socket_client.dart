@@ -1,21 +1,37 @@
+// lib/core/services/web_socket_client.dart
+
 import 'package:web_socket_channel/web_socket_channel.dart';
 import 'dart:async';
+import '../exceptions/forex_exception.dart';
+import 'connectivity_service.dart';
 
 class WebSocketClient {
   final String apiToken;
+  final ConnectivityService _connectivityService;
   static const String baseUrl = 'wss://ws.finnhub.io';
 
-  WebSocketClient({required this.apiToken});
+  WebSocketClient({
+    required this.apiToken,
+    required ConnectivityService connectivityService,
+  }) : _connectivityService = connectivityService;
 
   WebSocketChannel? _channel;
   StreamController<dynamic>? _controller;
   Timer? _pingTimer;
   bool _isConnected = false;
+  bool _isReconnecting = false;
 
   bool get isConnected => _isConnected;
 
-  Stream<dynamic>? connect() {
+  Future<Stream<dynamic>?> connect() async {
     if (_isConnected) return _controller?.stream;
+    if (_isReconnecting) return null;
+
+    // Проверяем подключение перед установкой WebSocket
+    final hasConnection = await _connectivityService.hasConnection();
+    if (!hasConnection) {
+      throw ForexException.fromType(ErrorType.network);
+    }
 
     try {
       _channel = WebSocketChannel.connect(
@@ -24,10 +40,9 @@ class WebSocketClient {
 
       _controller = StreamController<dynamic>.broadcast();
 
-      // Слушаем входящие сообщения
+      // Слушаем сообщения
       _channel?.stream.listen(
         (data) {
-// After (fixed):
           final controller = _controller;
           if (controller != null && !controller.isClosed) {
             controller.add(data);
@@ -46,17 +61,25 @@ class WebSocketClient {
       _isConnected = true;
       _startPingTimer();
 
+      // Отправляем начальный пинг сразу после подключения
+      print('WebSocket Sending initial ping');
+      send('{"type":"ping"}');
+
       return _controller?.stream;
     } catch (e) {
-      print('WebSocket Connection Error: $e');
-      _reconnect();
-      return null;
+      _isConnected = false;
+      throw ForexException.fromType(ErrorType.network, e);
     }
   }
 
   void send(String message) {
     if (_isConnected && _channel != null) {
-      _channel?.sink.add(message);
+      try {
+        _channel?.sink.add(message);
+      } catch (e) {
+        print('WebSocket Send Error: $e');
+        _reconnect();
+      }
     }
   }
 
@@ -68,9 +91,19 @@ class WebSocketClient {
   }
 
   void _reconnect() {
+    if (_isReconnecting) return;
+
+    _isReconnecting = true;
     disconnect();
-    Future.delayed(Duration(seconds: 5), () {
-      connect();
+
+    Future.delayed(Duration(seconds: 5), () async {
+      _isReconnecting = false;
+
+      try {
+        await connect();
+      } catch (e) {
+        // Игнорируем ошибки при переподключении
+      }
     });
   }
 
@@ -86,6 +119,5 @@ class WebSocketClient {
   void dispose() {
     disconnect();
     _pingTimer?.cancel();
-    _controller?.close();
   }
 }

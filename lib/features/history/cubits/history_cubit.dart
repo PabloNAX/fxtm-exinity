@@ -8,14 +8,19 @@ class HistoryCubit extends Cubit<HistoryState> {
 
   HistoryCubit(this._forexRepository) : super(HistoryInitial());
 
-  Future<void> loadHistoricalData(String symbol,
-      {String resolution = 'D'}) async {
+  //TODO implement the right way to pass "from: from, to: to" params
+  Future<void> loadHistoricalData(
+    String symbol, {
+    String resolution = 'D',
+    from,
+    to,
+  }) async {
     emit(HistoryLoading());
 
     try {
       final historicalData = await _forexRepository.getHistoricalData(symbol,
-          resolution: resolution);
-      emit(HistoryLoaded(historicalData)); // Теперь передаем List<CandleData>
+          resolution: resolution, from: from, to: to);
+      emit(HistoryLoaded(historicalData)); // Passing data List<CandleData>
     } catch (e) {
       emit(HistoryError(e.toString()));
     }
