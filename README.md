@@ -2,7 +2,7 @@
 
 ## Before launching
 
-Flutter version 3.24.5
+Flutter version `3.24.5`
 
 
 The freezed and mockito generated code should be first run with build_runner:
