@@ -8,3 +8,5 @@ final List<String> defaultPairs = [
   'OANDA:EUR_GBP',
   'OANDA:EUR_JPY'
 ];
+
+enum WebSocketStatus { disconnected, connected, paused }

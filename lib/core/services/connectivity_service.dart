@@ -10,6 +10,7 @@ class ConnectivityService {
   Future<bool> hasConnection() async {
     try {
       final connectivityResult = await _connectivity.checkConnectivity();
+      print('Connectivity result: $connectivityResult');
       return !connectivityResult.contains(ConnectivityResult.none);
     } catch (e) {
       return false;

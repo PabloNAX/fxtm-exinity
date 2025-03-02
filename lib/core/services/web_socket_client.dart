@@ -61,10 +61,6 @@ class WebSocketClient {
       _isConnected = true;
       _startPingTimer();
 
-      // Отправляем начальный пинг сразу после подключения
-      print('WebSocket Sending initial ping');
-      send('{"type":"ping"}');
-
       return _controller?.stream;
     } catch (e) {
       _isConnected = false;

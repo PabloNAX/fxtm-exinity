@@ -3,6 +3,7 @@ import 'package:shared_preferences/shared_preferences.dart';
 import '../../core/exceptions/forex_exception.dart';
 import '../../core/services/cache_service.dart';
 import '../../core/services/finnhub_service.dart';
+import '../../core/utils/constants.dart';
 import '../models/candle_data.dart';
 import '../models/candle_data_api_model.dart';
 import '../models/forex_pair.dart';
@@ -11,17 +12,6 @@ import '../models/forex_symbols_api_model.dart';
 class ForexRepository {
   final FinnhubService _service;
   final CacheService _cacheService;
-
-  static const List<String> _defaultPairs = [
-    'OANDA:EUR_USD',
-    'OANDA:GBP_USD',
-    'OANDA:USD_JPY',
-    'OANDA:AUD_USD',
-    'OANDA:USD_CAD',
-    'OANDA:USD_CHF',
-    'OANDA:EUR_GBP',
-    'OANDA:EUR_JPY'
-  ];
 
   ForexRepository({
     required FinnhubService service,
@@ -34,7 +24,7 @@ class ForexRepository {
       // Try to get from cache first
       final cachedSymbols = await _cacheService.getCachedForexPairs();
       if (cachedSymbols != null) {
-        print('кэщ');
+        print('data fetched from cache');
         return _convertToForexPairs(cachedSymbols);
       }
 
@@ -85,7 +75,7 @@ class ForexRepository {
   List<ForexPair> _convertToForexPairs(List<ForexSymbolsApiModel> symbols) {
     // Your existing implementation
     symbols = symbols
-        .where((symbol) => _defaultPairs.contains(symbol.symbol))
+        .where((symbol) => defaultPairs.contains(symbol.symbol))
         .toList();
 
     return symbols
