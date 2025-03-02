@@ -3,7 +3,7 @@ import 'package:flutter/material.dart';
 import '../core/services/finnhub_service.dart';
 import '../core/services/ws_service.dart';
 import '../data/repositories/forex_repository.dart';
-import 'forex_list/forex_pairs_screen.dart';
+import 'forex_list/forex_pairs_page.dart';
 
 class MainPage extends StatefulWidget {
   final ForexRepository forexRepository;

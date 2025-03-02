@@ -32,12 +32,12 @@
             <td></td>
             <td class="headerItem">Lines:</td>
             <td class="headerCovTableEntryLo">0.0&nbsp;%</td>
-            <td class="headerCovTableEntry">37</td>
+            <td class="headerCovTableEntry">82</td>
             <td class="headerCovTableEntry">0</td>
           </tr>
           <tr>
             <td class="headerItem">Test Date:</td>
-            <td class="headerValue">2025-03-02 20:11:03</td>
+            <td class="headerValue">2025-03-03 00:46:41</td>
             <td></td>
             <td class="headerItem">Functions:</td>
             <td class="headerCovTableEntryHi">-</td>
@@ -60,95 +60,202 @@
               <td>
 <pre class="sourceHeading">            Line data    Source code</pre>
 <pre class="source">
-<span id="L1"><span class="lineNum">       1</span>              : import 'dart:convert';</span>
-<span id="L2"><span class="lineNum">       2</span>              : </span>
-<span id="L3"><span class="lineNum">       3</span>              : import 'package:fxtm/core/services/web_socket_client.dart';</span>
-<span id="L4"><span class="lineNum">       4</span>              : </span>
-<span id="L5"><span class="lineNum">       5</span>              : import '../../data/models/forex_pair.dart';</span>
-<span id="L6"><span class="lineNum">       6</span>              : import '../../data/models/forex_update_ws_model.dart';</span>
-<span id="L7"><span class="lineNum">       7</span>              : </span>
-<span id="L8"><span class="lineNum">       8</span>              : class WsService {</span>
-<span id="L9"><span class="lineNum">       9</span>              :   final WebSocketClient _wsClient;</span>
-<span id="L10"><span class="lineNum">      10</span>              :   final Map&lt;String, double&gt; _lastPrices = {};</span>
-<span id="L11"><span class="lineNum">      11</span>              : </span>
-<span id="L12"><span class="lineNum">      12</span> <span class="tlaUNC">           0 :   WsService({required WebSocketClient wsClient}) : _wsClient = wsClient;</span></span>
-<span id="L13"><span class="lineNum">      13</span>              : </span>
-<span id="L14"><span class="lineNum">      14</span> <span class="tlaUNC">           0 :   Future&lt;void&gt; subscribeToSymbols(</span></span>
-<span id="L15"><span class="lineNum">      15</span>              :     List&lt;String&gt; symbols,</span>
-<span id="L16"><span class="lineNum">      16</span>              :     void Function(ForexPair) onPriceUpdate,</span>
-<span id="L17"><span class="lineNum">      17</span>              :   ) async {</span>
-<span id="L18"><span class="lineNum">      18</span>              :     // final stream = _wsClient.connect();</span>
-<span id="L19"><span class="lineNum">      19</span>              :     // if (stream == null) return;</span>
+<span id="L1"><span class="lineNum">       1</span>              : import 'dart:async';</span>
+<span id="L2"><span class="lineNum">       2</span>              : import 'dart:convert';</span>
+<span id="L3"><span class="lineNum">       3</span>              : </span>
+<span id="L4"><span class="lineNum">       4</span>              : import 'package:fxtm/core/exceptions/app_error.dart';</span>
+<span id="L5"><span class="lineNum">       5</span>              : import 'package:fxtm/core/services/web_socket_client.dart';</span>
+<span id="L6"><span class="lineNum">       6</span>              : </span>
+<span id="L7"><span class="lineNum">       7</span>              : import '../../data/models/forex_pair.dart';</span>
+<span id="L8"><span class="lineNum">       8</span>              : import '../../data/models/forex_update_ws_model.dart';</span>
+<span id="L9"><span class="lineNum">       9</span>              : </span>
+<span id="L10"><span class="lineNum">      10</span>              : /// Service for managing WebSocket connections and handling forex price updates.</span>
+<span id="L11"><span class="lineNum">      11</span>              : /// This service handles subscribing to forex pairs, receiving updates, and managing connection states, including reconnection logic.</span>
+<span id="L12"><span class="lineNum">      12</span>              : //TODO simplify the WS service , proper error handling</span>
+<span id="L13"><span class="lineNum">      13</span>              : class WsService {</span>
+<span id="L14"><span class="lineNum">      14</span>              :   final WebSocketClient _wsClient;</span>
+<span id="L15"><span class="lineNum">      15</span>              :   final Map&lt;String, double&gt; _lastPrices = {};</span>
+<span id="L16"><span class="lineNum">      16</span>              :   StreamSubscription? _subscription;</span>
+<span id="L17"><span class="lineNum">      17</span>              :   Timer? _connectionMonitorTimer;</span>
+<span id="L18"><span class="lineNum">      18</span>              :   DateTime? _lastMessageTime;</span>
+<span id="L19"><span class="lineNum">      19</span>              :   static const Duration _maxSilenceDuration = Duration(seconds: 30);</span>
 <span id="L20"><span class="lineNum">      20</span>              : </span>
-<span id="L21"><span class="lineNum">      21</span> <span class="tlaUNC">           0 :     final stream = await _wsClient.connect();</span></span>
-<span id="L22"><span class="lineNum">      22</span>              :     if (stream == null) return;</span>
-<span id="L23"><span class="lineNum">      23</span>              : </span>
-<span id="L24"><span class="lineNum">      24</span> <span class="tlaUNC">           0 :     stream.listen(</span></span>
-<span id="L25"><span class="lineNum">      25</span> <span class="tlaUNC">           0 :       (message) =&gt; _handleMessage(message, onPriceUpdate),</span></span>
-<span id="L26"><span class="lineNum">      26</span> <span class="tlaUNC">           0 :       onError: (error) =&gt; print('WebSocket error: $error'),</span></span>
-<span id="L27"><span class="lineNum">      27</span>              :     );</span>
-<span id="L28"><span class="lineNum">      28</span>              : </span>
-<span id="L29"><span class="lineNum">      29</span> <span class="tlaUNC">           0 :     for (final symbol in symbols) {</span></span>
-<span id="L30"><span class="lineNum">      30</span> <span class="tlaUNC">           0 :       _subscribe(symbol);</span></span>
-<span id="L31"><span class="lineNum">      31</span>              :     }</span>
-<span id="L32"><span class="lineNum">      32</span>              :   }</span>
-<span id="L33"><span class="lineNum">      33</span>              : </span>
-<span id="L34"><span class="lineNum">      34</span> <span class="tlaUNC">           0 :   void _subscribe(String symbol) {</span></span>
-<span id="L35"><span class="lineNum">      35</span> <span class="tlaUNC">           0 :     final message = {'type': 'subscribe', 'symbol': symbol};</span></span>
-<span id="L36"><span class="lineNum">      36</span> <span class="tlaUNC">           0 :     _wsClient.send(jsonEncode(message));</span></span>
-<span id="L37"><span class="lineNum">      37</span>              :   }</span>
+<span id="L21"><span class="lineNum">      21</span> <span class="tlaUNC">           0 :   WsService({required WebSocketClient wsClient}) : _wsClient = wsClient;</span></span>
+<span id="L22"><span class="lineNum">      22</span>              : </span>
+<span id="L23"><span class="lineNum">      23</span> <span class="tlaUNC">           0 :   Future&lt;void&gt; subscribeToSymbols(</span></span>
+<span id="L24"><span class="lineNum">      24</span>              :     List&lt;String&gt; symbols,</span>
+<span id="L25"><span class="lineNum">      25</span>              :     void Function(ForexPair) onPriceUpdate, {</span>
+<span id="L26"><span class="lineNum">      26</span>              :     Function(AppError)? onError, // Add error callback</span>
+<span id="L27"><span class="lineNum">      27</span>              :   }) async {</span>
+<span id="L28"><span class="lineNum">      28</span>              :     try {</span>
+<span id="L29"><span class="lineNum">      29</span> <span class="tlaUNC">           0 :       print('Attempting to connect to WebSocket...');</span></span>
+<span id="L30"><span class="lineNum">      30</span> <span class="tlaUNC">           0 :       final stream = await _wsClient.connect();</span></span>
+<span id="L31"><span class="lineNum">      31</span>              :       if (stream == null) {</span>
+<span id="L32"><span class="lineNum">      32</span> <span class="tlaUNC">           0 :         print('Failed to connect to WebSocket.');</span></span>
+<span id="L33"><span class="lineNum">      33</span>              :         if (onError != null) {</span>
+<span id="L34"><span class="lineNum">      34</span> <span class="tlaUNC">           0 :           onError(AppError.network('Unable to establish WebSocket connection'));</span></span>
+<span id="L35"><span class="lineNum">      35</span>              :         }</span>
+<span id="L36"><span class="lineNum">      36</span>              :         return;</span>
+<span id="L37"><span class="lineNum">      37</span>              :       }</span>
 <span id="L38"><span class="lineNum">      38</span>              : </span>
-<span id="L39"><span class="lineNum">      39</span> <span class="tlaUNC">           0 :   void _handleMessage(dynamic message, Function(ForexPair) onPriceUpdate) {</span></span>
-<span id="L40"><span class="lineNum">      40</span> <span class="tlaUNC">           0 :     _logWebSocketMessage(message, prefix: 'RECEIVED');</span></span>
-<span id="L41"><span class="lineNum">      41</span>              :     try {</span>
-<span id="L42"><span class="lineNum">      42</span> <span class="tlaUNC">           0 :       final Map&lt;String, dynamic&gt; jsonData = jsonDecode(message);</span></span>
-<span id="L43"><span class="lineNum">      43</span>              : </span>
-<span id="L44"><span class="lineNum">      44</span>              : // If we receive a ping, respond with a pong immediately</span>
-<span id="L45"><span class="lineNum">      45</span> <span class="tlaUNC">           0 :       if (jsonData['type'] == 'ping') {</span></span>
-<span id="L46"><span class="lineNum">      46</span> <span class="tlaUNC">           0 :         _logWebSocketMessage(&quot;pong&quot;, prefix: 'SENT');</span></span>
-<span id="L47"><span class="lineNum">      47</span> <span class="tlaUNC">           0 :         _wsClient.send(jsonEncode({'type': 'pong'}));</span></span>
-<span id="L48"><span class="lineNum">      48</span>              :         return;</span>
-<span id="L49"><span class="lineNum">      49</span>              :       }</span>
-<span id="L50"><span class="lineNum">      50</span>              : </span>
-<span id="L51"><span class="lineNum">      51</span> <span class="tlaUNC">           0 :       final update = ForexUpdateWsModel.fromJson(jsonDecode(message));</span></span>
-<span id="L52"><span class="lineNum">      52</span>              : </span>
-<span id="L53"><span class="lineNum">      53</span> <span class="tlaUNC">           0 :       _logWebSocketMessage(update, prefix: 'PARSED');</span></span>
-<span id="L54"><span class="lineNum">      54</span>              : </span>
-<span id="L55"><span class="lineNum">      55</span> <span class="tlaUNC">           0 :       if (update.type == &quot;trade&quot; &amp;&amp; update.data.isNotEmpty) {</span></span>
-<span id="L56"><span class="lineNum">      56</span> <span class="tlaUNC">           0 :         for (var data in update.data) {</span></span>
-<span id="L57"><span class="lineNum">      57</span> <span class="tlaUNC">           0 :           final oldPrice = _lastPrices[data.symbol] ?? data.price;</span></span>
-<span id="L58"><span class="lineNum">      58</span> <span class="tlaUNC">           0 :           final change = data.price - oldPrice;</span></span>
-<span id="L59"><span class="lineNum">      59</span> <span class="tlaUNC">           0 :           final percentChange = oldPrice != 0 ? (change / oldPrice) * 100 : 0.0;</span></span>
-<span id="L60"><span class="lineNum">      60</span>              : </span>
-<span id="L61"><span class="lineNum">      61</span>              :           // Обновляем последнюю цену</span>
-<span id="L62"><span class="lineNum">      62</span> <span class="tlaUNC">           0 :           _lastPrices[data.symbol] = data.price;</span></span>
+<span id="L39"><span class="lineNum">      39</span> <span class="tlaUNC">           0 :       print('Connected to WebSocket. Subscribing to symbols...');</span></span>
+<span id="L40"><span class="lineNum">      40</span> <span class="tlaUNC">           0 :       _lastMessageTime = DateTime.now();</span></span>
+<span id="L41"><span class="lineNum">      41</span>              : </span>
+<span id="L42"><span class="lineNum">      42</span>              :       // Cancel any existing subscription</span>
+<span id="L43"><span class="lineNum">      43</span> <span class="tlaUNC">           0 :       await _subscription?.cancel();</span></span>
+<span id="L44"><span class="lineNum">      44</span>              : </span>
+<span id="L45"><span class="lineNum">      45</span> <span class="tlaUNC">           0 :       _subscription = stream.listen(</span></span>
+<span id="L46"><span class="lineNum">      46</span> <span class="tlaUNC">           0 :         (message) {</span></span>
+<span id="L47"><span class="lineNum">      47</span> <span class="tlaUNC">           0 :           _lastMessageTime = DateTime.now(); // Update last message time</span></span>
+<span id="L48"><span class="lineNum">      48</span> <span class="tlaUNC">           0 :           _handleMessage(message, onPriceUpdate);</span></span>
+<span id="L49"><span class="lineNum">      49</span>              :         },</span>
+<span id="L50"><span class="lineNum">      50</span> <span class="tlaUNC">           0 :         onError: (error) {</span></span>
+<span id="L51"><span class="lineNum">      51</span> <span class="tlaUNC">           0 :           print('WebSocket error: $error');</span></span>
+<span id="L52"><span class="lineNum">      52</span>              :           if (onError != null) {</span>
+<span id="L53"><span class="lineNum">      53</span> <span class="tlaUNC">           0 :             onError(AppError.network('WebSocket connection error: $error'));</span></span>
+<span id="L54"><span class="lineNum">      54</span>              :           }</span>
+<span id="L55"><span class="lineNum">      55</span>              :         },</span>
+<span id="L56"><span class="lineNum">      56</span> <span class="tlaUNC">           0 :         onDone: () {</span></span>
+<span id="L57"><span class="lineNum">      57</span> <span class="tlaUNC">           0 :           print('WebSocket connection closed');</span></span>
+<span id="L58"><span class="lineNum">      58</span>              :           if (onError != null) {</span>
+<span id="L59"><span class="lineNum">      59</span> <span class="tlaUNC">           0 :             onError(AppError.network('WebSocket connection closed'));</span></span>
+<span id="L60"><span class="lineNum">      60</span>              :           }</span>
+<span id="L61"><span class="lineNum">      61</span>              :         },</span>
+<span id="L62"><span class="lineNum">      62</span>              :       );</span>
 <span id="L63"><span class="lineNum">      63</span>              : </span>
-<span id="L64"><span class="lineNum">      64</span> <span class="tlaUNC">           0 :           final pair = ForexPair(</span></span>
-<span id="L65"><span class="lineNum">      65</span> <span class="tlaUNC">           0 :             symbol: data.symbol,</span></span>
-<span id="L66"><span class="lineNum">      66</span> <span class="tlaUNC">           0 :             currentPrice: data.price,</span></span>
-<span id="L67"><span class="lineNum">      67</span>              :             change: change,</span>
-<span id="L68"><span class="lineNum">      68</span>              :             percentChange: percentChange,</span>
-<span id="L69"><span class="lineNum">      69</span>              :           );</span>
-<span id="L70"><span class="lineNum">      70</span>              : </span>
-<span id="L71"><span class="lineNum">      71</span> <span class="tlaUNC">           0 :           onPriceUpdate(pair);</span></span>
-<span id="L72"><span class="lineNum">      72</span>              :         }</span>
-<span id="L73"><span class="lineNum">      73</span>              :       }</span>
-<span id="L74"><span class="lineNum">      74</span>              :     } catch (e) {</span>
-<span id="L75"><span class="lineNum">      75</span> <span class="tlaUNC">           0 :       _logWebSocketMessage('Error: $e\nMessage: $message', prefix: 'ERROR');</span></span>
-<span id="L76"><span class="lineNum">      76</span> <span class="tlaUNC">           0 :       print('Error parsing message: $e');</span></span>
-<span id="L77"><span class="lineNum">      77</span>              :     }</span>
-<span id="L78"><span class="lineNum">      78</span>              :   }</span>
-<span id="L79"><span class="lineNum">      79</span>              : </span>
-<span id="L80"><span class="lineNum">      80</span> <span class="tlaUNC">           0 :   void unsubscribeFromAll() {</span></span>
-<span id="L81"><span class="lineNum">      81</span> <span class="tlaUNC">           0 :     _wsClient.send(jsonEncode({'type': 'unsubscribe', 'symbol': 'all'}));</span></span>
-<span id="L82"><span class="lineNum">      82</span> <span class="tlaUNC">           0 :     _wsClient.disconnect();</span></span>
-<span id="L83"><span class="lineNum">      83</span>              :   }</span>
-<span id="L84"><span class="lineNum">      84</span>              : }</span>
-<span id="L85"><span class="lineNum">      85</span>              : </span>
-<span id="L86"><span class="lineNum">      86</span> <span class="tlaUNC">           0 : void _logWebSocketMessage(dynamic message, {String prefix = ''}) {</span></span>
-<span id="L87"><span class="lineNum">      87</span> <span class="tlaUNC">           0 :   final timestamp = DateTime.now().toIso8601String();</span></span>
-<span id="L88"><span class="lineNum">      88</span> <span class="tlaUNC">           0 :   print('[$timestamp] $prefix: $message');</span></span>
-<span id="L89"><span class="lineNum">      89</span>              : }</span>
+<span id="L64"><span class="lineNum">      64</span>              :       // Start connection monitoring</span>
+<span id="L65"><span class="lineNum">      65</span> <span class="tlaUNC">           0 :       _startConnectionMonitoring(onError);</span></span>
+<span id="L66"><span class="lineNum">      66</span>              : </span>
+<span id="L67"><span class="lineNum">      67</span> <span class="tlaUNC">           0 :       for (final symbol in symbols) {</span></span>
+<span id="L68"><span class="lineNum">      68</span> <span class="tlaUNC">           0 :         _subscribe(symbol);</span></span>
+<span id="L69"><span class="lineNum">      69</span>              :       }</span>
+<span id="L70"><span class="lineNum">      70</span>              :     } catch (e) {</span>
+<span id="L71"><span class="lineNum">      71</span> <span class="tlaUNC">           0 :       print('WebSocket subscription error: $e');</span></span>
+<span id="L72"><span class="lineNum">      72</span>              :       if (onError != null) {</span>
+<span id="L73"><span class="lineNum">      73</span> <span class="tlaUNC">           0 :         onError(AppError.network('WebSocket subscription error: $e'));</span></span>
+<span id="L74"><span class="lineNum">      74</span>              :       }</span>
+<span id="L75"><span class="lineNum">      75</span>              :       rethrow; // Rethrow to allow Cubit to handle the error</span>
+<span id="L76"><span class="lineNum">      76</span>              :     }</span>
+<span id="L77"><span class="lineNum">      77</span>              :   }</span>
+<span id="L78"><span class="lineNum">      78</span>              : </span>
+<span id="L79"><span class="lineNum">      79</span> <span class="tlaUNC">           0 :   void _startConnectionMonitoring(Function(AppError)? onError) {</span></span>
+<span id="L80"><span class="lineNum">      80</span> <span class="tlaUNC">           0 :     _connectionMonitorTimer?.cancel();</span></span>
+<span id="L81"><span class="lineNum">      81</span> <span class="tlaUNC">           0 :     _connectionMonitorTimer =</span></span>
+<span id="L82"><span class="lineNum">      82</span> <span class="tlaUNC">           0 :         Timer.periodic(const Duration(seconds: 10), (timer) {</span></span>
+<span id="L83"><span class="lineNum">      83</span>              :       // Check if we haven't received messages for too long</span>
+<span id="L84"><span class="lineNum">      84</span> <span class="tlaUNC">           0 :       if (_lastMessageTime != null) {</span></span>
+<span id="L85"><span class="lineNum">      85</span> <span class="tlaUNC">           0 :         final silenceDuration = DateTime.now().difference(_lastMessageTime!);</span></span>
+<span id="L86"><span class="lineNum">      86</span> <span class="tlaUNC">           0 :         if (silenceDuration &gt; _maxSilenceDuration) {</span></span>
+<span id="L87"><span class="lineNum">      87</span> <span class="tlaUNC">           0 :           print('WebSocket silent for too long: $silenceDuration');</span></span>
+<span id="L88"><span class="lineNum">      88</span>              :           if (onError != null) {</span>
+<span id="L89"><span class="lineNum">      89</span> <span class="tlaUNC">           0 :             onError(AppError.network('Connection lost - no data from server'));</span></span>
+<span id="L90"><span class="lineNum">      90</span>              :           }</span>
+<span id="L91"><span class="lineNum">      91</span>              : </span>
+<span id="L92"><span class="lineNum">      92</span>              :           // Try to reconnect</span>
+<span id="L93"><span class="lineNum">      93</span> <span class="tlaUNC">           0 :           _reconnect(onError);</span></span>
+<span id="L94"><span class="lineNum">      94</span>              :           return;</span>
+<span id="L95"><span class="lineNum">      95</span>              :         }</span>
+<span id="L96"><span class="lineNum">      96</span>              :       }</span>
+<span id="L97"><span class="lineNum">      97</span>              : </span>
+<span id="L98"><span class="lineNum">      98</span>              :       // Send ping to check connection</span>
+<span id="L99"><span class="lineNum">      99</span> <span class="tlaUNC">           0 :       _sendPing();</span></span>
+<span id="L100"><span class="lineNum">     100</span>              :     });</span>
+<span id="L101"><span class="lineNum">     101</span>              :   }</span>
+<span id="L102"><span class="lineNum">     102</span>              : </span>
+<span id="L103"><span class="lineNum">     103</span> <span class="tlaUNC">           0 :   void _sendPing() {</span></span>
+<span id="L104"><span class="lineNum">     104</span>              :     try {</span>
+<span id="L105"><span class="lineNum">     105</span> <span class="tlaUNC">           0 :       _wsClient.send(jsonEncode({'type': 'ping'}));</span></span>
+<span id="L106"><span class="lineNum">     106</span> <span class="tlaUNC">           0 :       print('Sent ping to WebSocket server');</span></span>
+<span id="L107"><span class="lineNum">     107</span>              :     } catch (e) {</span>
+<span id="L108"><span class="lineNum">     108</span> <span class="tlaUNC">           0 :       print('Error sending ping: $e');</span></span>
+<span id="L109"><span class="lineNum">     109</span>              :     }</span>
+<span id="L110"><span class="lineNum">     110</span>              :   }</span>
+<span id="L111"><span class="lineNum">     111</span>              : </span>
+<span id="L112"><span class="lineNum">     112</span> <span class="tlaUNC">           0 :   void _reconnect(Function(AppError)? onError) {</span></span>
+<span id="L113"><span class="lineNum">     113</span>              :     // Disconnect first</span>
+<span id="L114"><span class="lineNum">     114</span> <span class="tlaUNC">           0 :     unsubscribeFromAll();</span></span>
+<span id="L115"><span class="lineNum">     115</span>              : </span>
+<span id="L116"><span class="lineNum">     116</span>              :     // Try to reconnect after delay</span>
+<span id="L117"><span class="lineNum">     117</span> <span class="tlaUNC">           0 :     Future.delayed(Duration(seconds: 5), () {</span></span>
+<span id="L118"><span class="lineNum">     118</span> <span class="tlaUNC">           0 :       if (_lastPrices.isNotEmpty) {</span></span>
+<span id="L119"><span class="lineNum">     119</span> <span class="tlaUNC">           0 :         subscribeToSymbols(_lastPrices.keys.toList(), (pair) {</span></span>
+<span id="L120"><span class="lineNum">     120</span>              :           // We need to recreate the onPriceUpdate callback here</span>
+<span id="L121"><span class="lineNum">     121</span>              :         }, onError: onError);</span>
+<span id="L122"><span class="lineNum">     122</span>              :       }</span>
+<span id="L123"><span class="lineNum">     123</span>              :     });</span>
+<span id="L124"><span class="lineNum">     124</span>              :   }</span>
+<span id="L125"><span class="lineNum">     125</span>              : </span>
+<span id="L126"><span class="lineNum">     126</span> <span class="tlaUNC">           0 :   void _subscribe(String symbol) {</span></span>
+<span id="L127"><span class="lineNum">     127</span> <span class="tlaUNC">           0 :     final message = {'type': 'subscribe', 'symbol': symbol};</span></span>
+<span id="L128"><span class="lineNum">     128</span> <span class="tlaUNC">           0 :     print('Subscribing to symbol: $symbol');</span></span>
+<span id="L129"><span class="lineNum">     129</span> <span class="tlaUNC">           0 :     _wsClient.send(jsonEncode(message));</span></span>
+<span id="L130"><span class="lineNum">     130</span>              :   }</span>
+<span id="L131"><span class="lineNum">     131</span>              : </span>
+<span id="L132"><span class="lineNum">     132</span> <span class="tlaUNC">           0 :   void _handleMessage(dynamic message, Function(ForexPair) onPriceUpdate) {</span></span>
+<span id="L133"><span class="lineNum">     133</span> <span class="tlaUNC">           0 :     _logWebSocketMessage(message, prefix: 'RECEIVED');</span></span>
+<span id="L134"><span class="lineNum">     134</span>              :     try {</span>
+<span id="L135"><span class="lineNum">     135</span> <span class="tlaUNC">           0 :       final Map&lt;String, dynamic&gt; jsonData = jsonDecode(message);</span></span>
+<span id="L136"><span class="lineNum">     136</span>              : </span>
+<span id="L137"><span class="lineNum">     137</span>              :       // If we receive a ping, respond with a pong immediately</span>
+<span id="L138"><span class="lineNum">     138</span> <span class="tlaUNC">           0 :       if (jsonData['type'] == 'ping') {</span></span>
+<span id="L139"><span class="lineNum">     139</span> <span class="tlaUNC">           0 :         _logWebSocketMessage(&quot;pong&quot;, prefix: 'SENT');</span></span>
+<span id="L140"><span class="lineNum">     140</span> <span class="tlaUNC">           0 :         _wsClient.send(jsonEncode({'type': 'pong'}));</span></span>
+<span id="L141"><span class="lineNum">     141</span>              :         return;</span>
+<span id="L142"><span class="lineNum">     142</span>              :       }</span>
+<span id="L143"><span class="lineNum">     143</span>              : </span>
+<span id="L144"><span class="lineNum">     144</span> <span class="tlaUNC">           0 :       final update = ForexUpdateWsModel.fromJson(jsonDecode(message));</span></span>
+<span id="L145"><span class="lineNum">     145</span>              : </span>
+<span id="L146"><span class="lineNum">     146</span> <span class="tlaUNC">           0 :       _logWebSocketMessage(update, prefix: 'PARSED');</span></span>
+<span id="L147"><span class="lineNum">     147</span>              : </span>
+<span id="L148"><span class="lineNum">     148</span> <span class="tlaUNC">           0 :       if (update.type == &quot;trade&quot; &amp;&amp; update.data.isNotEmpty) {</span></span>
+<span id="L149"><span class="lineNum">     149</span> <span class="tlaUNC">           0 :         for (var data in update.data) {</span></span>
+<span id="L150"><span class="lineNum">     150</span> <span class="tlaUNC">           0 :           final oldPrice = _lastPrices[data.symbol] ?? data.price;</span></span>
+<span id="L151"><span class="lineNum">     151</span> <span class="tlaUNC">           0 :           final change = data.price - oldPrice;</span></span>
+<span id="L152"><span class="lineNum">     152</span> <span class="tlaUNC">           0 :           final percentChange = oldPrice != 0 ? (change / oldPrice) * 100 : 0.0;</span></span>
+<span id="L153"><span class="lineNum">     153</span>              : </span>
+<span id="L154"><span class="lineNum">     154</span>              :           // Update the last price</span>
+<span id="L155"><span class="lineNum">     155</span> <span class="tlaUNC">           0 :           _lastPrices[data.symbol] = data.price;</span></span>
+<span id="L156"><span class="lineNum">     156</span>              : </span>
+<span id="L157"><span class="lineNum">     157</span> <span class="tlaUNC">           0 :           final pair = ForexPair(</span></span>
+<span id="L158"><span class="lineNum">     158</span> <span class="tlaUNC">           0 :             symbol: data.symbol,</span></span>
+<span id="L159"><span class="lineNum">     159</span> <span class="tlaUNC">           0 :             currentPrice: data.price,</span></span>
+<span id="L160"><span class="lineNum">     160</span>              :             change: change,</span>
+<span id="L161"><span class="lineNum">     161</span>              :             percentChange: percentChange,</span>
+<span id="L162"><span class="lineNum">     162</span>              :           );</span>
+<span id="L163"><span class="lineNum">     163</span>              : </span>
+<span id="L164"><span class="lineNum">     164</span> <span class="tlaUNC">           0 :           print(</span></span>
+<span id="L165"><span class="lineNum">     165</span> <span class="tlaUNC">           0 :               'Price update for ${data.symbol}: ${data.price} (change: $change, percentChange: $percentChange)');</span></span>
+<span id="L166"><span class="lineNum">     166</span> <span class="tlaUNC">           0 :           onPriceUpdate(pair);</span></span>
+<span id="L167"><span class="lineNum">     167</span>              :         }</span>
+<span id="L168"><span class="lineNum">     168</span>              :       }</span>
+<span id="L169"><span class="lineNum">     169</span>              :     } catch (e) {</span>
+<span id="L170"><span class="lineNum">     170</span> <span class="tlaUNC">           0 :       _logWebSocketMessage('Error: $e\nMessage: $message', prefix: 'ERROR');</span></span>
+<span id="L171"><span class="lineNum">     171</span> <span class="tlaUNC">           0 :       print('Error parsing message: $e');</span></span>
+<span id="L172"><span class="lineNum">     172</span>              :     }</span>
+<span id="L173"><span class="lineNum">     173</span>              :   }</span>
+<span id="L174"><span class="lineNum">     174</span>              : </span>
+<span id="L175"><span class="lineNum">     175</span> <span class="tlaUNC">           0 :   void unsubscribeFromAll() {</span></span>
+<span id="L176"><span class="lineNum">     176</span> <span class="tlaUNC">           0 :     print('Unsubscribing from all symbols...');</span></span>
+<span id="L177"><span class="lineNum">     177</span> <span class="tlaUNC">           0 :     _connectionMonitorTimer?.cancel();</span></span>
+<span id="L178"><span class="lineNum">     178</span> <span class="tlaUNC">           0 :     _subscription?.cancel();</span></span>
+<span id="L179"><span class="lineNum">     179</span>              : </span>
+<span id="L180"><span class="lineNum">     180</span>              :     try {</span>
+<span id="L181"><span class="lineNum">     181</span> <span class="tlaUNC">           0 :       _wsClient.send(jsonEncode({'type': 'unsubscribe', 'symbol': 'all'}));</span></span>
+<span id="L182"><span class="lineNum">     182</span> <span class="tlaUNC">           0 :       _wsClient.disconnect();</span></span>
+<span id="L183"><span class="lineNum">     183</span>              :     } catch (e) {</span>
+<span id="L184"><span class="lineNum">     184</span> <span class="tlaUNC">           0 :       print('Error during unsubscribe: $e');</span></span>
+<span id="L185"><span class="lineNum">     185</span>              :     }</span>
+<span id="L186"><span class="lineNum">     186</span>              :   }</span>
+<span id="L187"><span class="lineNum">     187</span>              : </span>
+<span id="L188"><span class="lineNum">     188</span> <span class="tlaUNC">           0 :   void dispose() {</span></span>
+<span id="L189"><span class="lineNum">     189</span> <span class="tlaUNC">           0 :     unsubscribeFromAll();</span></span>
+<span id="L190"><span class="lineNum">     190</span>              :   }</span>
+<span id="L191"><span class="lineNum">     191</span>              : }</span>
+<span id="L192"><span class="lineNum">     192</span>              : </span>
+<span id="L193"><span class="lineNum">     193</span> <span class="tlaUNC">           0 : void _logWebSocketMessage(dynamic message, {String prefix = ''}) {</span></span>
+<span id="L194"><span class="lineNum">     194</span> <span class="tlaUNC">           0 :   final timestamp = DateTime.now().toIso8601String();</span></span>
+<span id="L195"><span class="lineNum">     195</span> <span class="tlaUNC">           0 :   print('[$timestamp] $prefix: $message');</span></span>
+<span id="L196"><span class="lineNum">     196</span>              : }</span>
         </pre>
               </td>
             </tr>

@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:mockito/mockito.dart';
-import 'package:fxtm/pages/forex_list/forex_pairs_screen.dart';
+import 'package:fxtm/pages/forex_list/forex_pairs_page.dart';
 
 import 'mock_classes.mocks.dart';
 

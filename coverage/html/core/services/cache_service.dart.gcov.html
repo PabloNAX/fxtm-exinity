@@ -37,7 +37,7 @@
           </tr>
           <tr>
             <td class="headerItem">Test Date:</td>
-            <td class="headerValue">2025-03-02 20:11:03</td>
+            <td class="headerValue">2025-03-03 00:46:41</td>
             <td></td>
             <td class="headerItem">Functions:</td>
             <td class="headerCovTableEntryHi">-</td>
@@ -65,48 +65,49 @@
 <span id="L3"><span class="lineNum">       3</span>              : </span>
 <span id="L4"><span class="lineNum">       4</span>              : import '../../data/models/forex_symbols_api_model.dart';</span>
 <span id="L5"><span class="lineNum">       5</span>              : </span>
-<span id="L6"><span class="lineNum">       6</span>              : class CacheService {</span>
-<span id="L7"><span class="lineNum">       7</span>              :   static const String _forexPairsKey = 'forex_pairs_cache';</span>
-<span id="L8"><span class="lineNum">       8</span>              :   static const Duration _cacheDuration = Duration(minutes: 5);</span>
-<span id="L9"><span class="lineNum">       9</span>              : </span>
-<span id="L10"><span class="lineNum">      10</span>              :   final SharedPreferences _prefs;</span>
-<span id="L11"><span class="lineNum">      11</span>              : </span>
-<span id="L12"><span class="lineNum">      12</span> <span class="tlaUNC">           0 :   CacheService(this._prefs);</span></span>
-<span id="L13"><span class="lineNum">      13</span>              : </span>
-<span id="L14"><span class="lineNum">      14</span> <span class="tlaUNC">           0 :   Future&lt;void&gt; cacheForexPairs(List&lt;ForexSymbolsApiModel&gt; pairs) async {</span></span>
-<span id="L15"><span class="lineNum">      15</span> <span class="tlaUNC">           0 :     final timestamp = DateTime.now().millisecondsSinceEpoch;</span></span>
-<span id="L16"><span class="lineNum">      16</span> <span class="tlaUNC">           0 :     final cacheData = {</span></span>
-<span id="L17"><span class="lineNum">      17</span>              :       'timestamp': timestamp,</span>
-<span id="L18"><span class="lineNum">      18</span> <span class="tlaUNC">           0 :       'pairs': pairs.map((pair) =&gt; pair.toJson()).toList(),</span></span>
-<span id="L19"><span class="lineNum">      19</span>              :     };</span>
-<span id="L20"><span class="lineNum">      20</span>              : </span>
-<span id="L21"><span class="lineNum">      21</span> <span class="tlaUNC">           0 :     await _prefs.setString(_forexPairsKey, jsonEncode(cacheData));</span></span>
-<span id="L22"><span class="lineNum">      22</span>              :   }</span>
-<span id="L23"><span class="lineNum">      23</span>              : </span>
-<span id="L24"><span class="lineNum">      24</span> <span class="tlaUNC">           0 :   Future&lt;List&lt;ForexSymbolsApiModel&gt;?&gt; getCachedForexPairs() async {</span></span>
-<span id="L25"><span class="lineNum">      25</span> <span class="tlaUNC">           0 :     final cachedData = _prefs.getString(_forexPairsKey);</span></span>
-<span id="L26"><span class="lineNum">      26</span>              :     if (cachedData == null) return null;</span>
-<span id="L27"><span class="lineNum">      27</span>              : </span>
-<span id="L28"><span class="lineNum">      28</span> <span class="tlaUNC">           0 :     final data = jsonDecode(cachedData) as Map&lt;String, dynamic&gt;;</span></span>
-<span id="L29"><span class="lineNum">      29</span> <span class="tlaUNC">           0 :     final timestamp = data['timestamp'] as int;</span></span>
-<span id="L30"><span class="lineNum">      30</span> <span class="tlaUNC">           0 :     final now = DateTime.now().millisecondsSinceEpoch;</span></span>
-<span id="L31"><span class="lineNum">      31</span>              : </span>
-<span id="L32"><span class="lineNum">      32</span>              :     // Проверяем не устарел ли кэш</span>
-<span id="L33"><span class="lineNum">      33</span> <span class="tlaUNC">           0 :     if (now - timestamp &gt; _cacheDuration.inMilliseconds) {</span></span>
-<span id="L34"><span class="lineNum">      34</span> <span class="tlaUNC">           0 :       await _prefs.remove(_forexPairsKey);</span></span>
-<span id="L35"><span class="lineNum">      35</span>              :       return null;</span>
-<span id="L36"><span class="lineNum">      36</span>              :     }</span>
-<span id="L37"><span class="lineNum">      37</span>              : </span>
-<span id="L38"><span class="lineNum">      38</span> <span class="tlaUNC">           0 :     final pairsJson = data['pairs'] as List;</span></span>
-<span id="L39"><span class="lineNum">      39</span>              :     return pairsJson</span>
-<span id="L40"><span class="lineNum">      40</span> <span class="tlaUNC">           0 :         .map((json) =&gt; ForexSymbolsApiModel.fromJson(json))</span></span>
-<span id="L41"><span class="lineNum">      41</span> <span class="tlaUNC">           0 :         .toList();</span></span>
-<span id="L42"><span class="lineNum">      42</span>              :   }</span>
-<span id="L43"><span class="lineNum">      43</span>              : </span>
-<span id="L44"><span class="lineNum">      44</span> <span class="tlaUNC">           0 :   Future&lt;void&gt; clearCache() async {</span></span>
-<span id="L45"><span class="lineNum">      45</span> <span class="tlaUNC">           0 :     await _prefs.remove(_forexPairsKey);</span></span>
-<span id="L46"><span class="lineNum">      46</span>              :   }</span>
-<span id="L47"><span class="lineNum">      47</span>              : }</span>
+<span id="L6"><span class="lineNum">       6</span>              : /// Service for caching forex pairs using SharedPreferences.</span>
+<span id="L7"><span class="lineNum">       7</span>              : class CacheService {</span>
+<span id="L8"><span class="lineNum">       8</span>              :   static const String _forexPairsKey = 'forex_pairs_cache';</span>
+<span id="L9"><span class="lineNum">       9</span>              :   static const Duration _cacheDuration = Duration(minutes: 5);</span>
+<span id="L10"><span class="lineNum">      10</span>              : </span>
+<span id="L11"><span class="lineNum">      11</span>              :   final SharedPreferences _prefs;</span>
+<span id="L12"><span class="lineNum">      12</span>              : </span>
+<span id="L13"><span class="lineNum">      13</span> <span class="tlaUNC">           0 :   CacheService(this._prefs);</span></span>
+<span id="L14"><span class="lineNum">      14</span>              : </span>
+<span id="L15"><span class="lineNum">      15</span> <span class="tlaUNC">           0 :   Future&lt;void&gt; cacheForexPairs(List&lt;ForexSymbolsApiModel&gt; pairs) async {</span></span>
+<span id="L16"><span class="lineNum">      16</span> <span class="tlaUNC">           0 :     final timestamp = DateTime.now().millisecondsSinceEpoch;</span></span>
+<span id="L17"><span class="lineNum">      17</span> <span class="tlaUNC">           0 :     final cacheData = {</span></span>
+<span id="L18"><span class="lineNum">      18</span>              :       'timestamp': timestamp,</span>
+<span id="L19"><span class="lineNum">      19</span> <span class="tlaUNC">           0 :       'pairs': pairs.map((pair) =&gt; pair.toJson()).toList(),</span></span>
+<span id="L20"><span class="lineNum">      20</span>              :     };</span>
+<span id="L21"><span class="lineNum">      21</span>              : </span>
+<span id="L22"><span class="lineNum">      22</span> <span class="tlaUNC">           0 :     await _prefs.setString(_forexPairsKey, jsonEncode(cacheData));</span></span>
+<span id="L23"><span class="lineNum">      23</span>              :   }</span>
+<span id="L24"><span class="lineNum">      24</span>              : </span>
+<span id="L25"><span class="lineNum">      25</span> <span class="tlaUNC">           0 :   Future&lt;List&lt;ForexSymbolsApiModel&gt;?&gt; getCachedForexPairs() async {</span></span>
+<span id="L26"><span class="lineNum">      26</span> <span class="tlaUNC">           0 :     final cachedData = _prefs.getString(_forexPairsKey);</span></span>
+<span id="L27"><span class="lineNum">      27</span>              :     if (cachedData == null) return null;</span>
+<span id="L28"><span class="lineNum">      28</span>              : </span>
+<span id="L29"><span class="lineNum">      29</span> <span class="tlaUNC">           0 :     final data = jsonDecode(cachedData) as Map&lt;String, dynamic&gt;;</span></span>
+<span id="L30"><span class="lineNum">      30</span> <span class="tlaUNC">           0 :     final timestamp = data['timestamp'] as int;</span></span>
+<span id="L31"><span class="lineNum">      31</span> <span class="tlaUNC">           0 :     final now = DateTime.now().millisecondsSinceEpoch;</span></span>
+<span id="L32"><span class="lineNum">      32</span>              : </span>
+<span id="L33"><span class="lineNum">      33</span>              :     // Check if the cache has expired</span>
+<span id="L34"><span class="lineNum">      34</span> <span class="tlaUNC">           0 :     if (now - timestamp &gt; _cacheDuration.inMilliseconds) {</span></span>
+<span id="L35"><span class="lineNum">      35</span> <span class="tlaUNC">           0 :       await _prefs.remove(_forexPairsKey);</span></span>
+<span id="L36"><span class="lineNum">      36</span>              :       return null;</span>
+<span id="L37"><span class="lineNum">      37</span>              :     }</span>
+<span id="L38"><span class="lineNum">      38</span>              : </span>
+<span id="L39"><span class="lineNum">      39</span> <span class="tlaUNC">           0 :     final pairsJson = data['pairs'] as List;</span></span>
+<span id="L40"><span class="lineNum">      40</span>              :     return pairsJson</span>
+<span id="L41"><span class="lineNum">      41</span> <span class="tlaUNC">           0 :         .map((json) =&gt; ForexSymbolsApiModel.fromJson(json))</span></span>
+<span id="L42"><span class="lineNum">      42</span> <span class="tlaUNC">           0 :         .toList();</span></span>
+<span id="L43"><span class="lineNum">      43</span>              :   }</span>
+<span id="L44"><span class="lineNum">      44</span>              : </span>
+<span id="L45"><span class="lineNum">      45</span> <span class="tlaUNC">           0 :   Future&lt;void&gt; clearCache() async {</span></span>
+<span id="L46"><span class="lineNum">      46</span> <span class="tlaUNC">           0 :     await _prefs.remove(_forexPairsKey);</span></span>
+<span id="L47"><span class="lineNum">      47</span>              :   }</span>
+<span id="L48"><span class="lineNum">      48</span>              : }</span>
         </pre>
               </td>
             </tr>
