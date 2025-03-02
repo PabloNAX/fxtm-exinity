@@ -9,6 +9,7 @@ import 'environments/main_mock.dart' as mock;
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
   await dotenv.load(fileName: ".env");
+  print("FLAVOR from .env: ${dotenv.env['FLAVOR']}");
   // Set flavor in the .env either prod or mock
   final flavor = dotenv.env['FLAVOR'] ?? 'prod';
   if (flavor == 'mock') {

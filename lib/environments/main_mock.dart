@@ -36,7 +36,8 @@ void main() async {
   final mockWsClient = MockWebSocketClient(
     connectivityService: connectivityService,
   );
-  final mockWsService = MockWsService(mockWsClient: mockWsClient);
+  final mockWsService = MockWsService(
+      mockWsClient: mockWsClient, connectivityService: connectivityService);
 
   runApp(FXTMApp(
     forexRepository: forexRepository,
