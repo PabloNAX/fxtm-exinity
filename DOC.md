@@ -82,7 +82,8 @@ This allows testing the application logic without relying on external services.
 
 ##
 Code Coverage
-- ![Screenshot 2025-03-03 at 01.37.26.png](..%2F..%2F..%2F..%2Fvar%2Ffolders%2Fr8%2F842m9prn3vj5cg1y_56xq88w0000gq%2FT%2FTemporaryItems%2FNSIRD_screencaptureui_kwWOeQ%2FScreenshot%202025-03-03%20at%2001.37.26.png)
+<img width="500" alt="Screenshot 2025-03-03 at 01 42 11" src="https://github.com/user-attachments/assets/8c94e102-80c4-4e33-8941-33d1023d5392" />
+
 
 ## Technical Highlights
 
