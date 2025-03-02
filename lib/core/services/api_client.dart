@@ -1,6 +1,7 @@
 // lib/core/services/api_client.dart
 
 import 'package:dio/dio.dart';
+import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:pretty_dio_logger/pretty_dio_logger.dart';
 import 'connectivity_service.dart';
 
@@ -9,6 +10,7 @@ class ApiClient {
   final String apiKey;
   final Dio dio;
   final ConnectivityService _connectivityService;
+  final String apiBaseUrl = dotenv.env['API_URL'] ?? 'https://example.com';
 
   ApiClient({
     required this.apiKey,
@@ -20,7 +22,7 @@ class ApiClient {
 
   void _initDio() {
     dio.options
-      ..baseUrl = 'https://finnhub.io/api/v1'
+      ..baseUrl = apiBaseUrl
       ..queryParameters = {'token': apiKey}
       ..connectTimeout = const Duration(seconds: 10)
       ..receiveTimeout = const Duration(seconds: 10)

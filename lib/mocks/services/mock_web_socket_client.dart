@@ -1,5 +1,3 @@
-// lib/mocks/services/mock_web_socket_client.dart
-
 import 'dart:async';
 import 'dart:convert';
 import 'dart:math';
@@ -51,7 +49,7 @@ class MockWebSocketClient extends WebSocketClient {
 
     if (!hasConnection) {
       print('MockWebSocketClient: No internet connection. Cannot connect.');
-      throw AppError.network();
+      throw AppError.network('No internet connection');
     }
 
     try {
@@ -124,6 +122,15 @@ class MockWebSocketClient extends WebSocketClient {
 
     Future.delayed(const Duration(seconds: 5), () async {
       _isReconnecting = false;
+
+      // Check connectivity before attempting to reconnect
+      final hasConnection = await _connectivityService.hasConnection();
+      if (!hasConnection) {
+        print('MockWebSocketClient: No internet connection. Cannot reconnect.');
+        _controller.addError(AppError.network('No internet connection'));
+        return;
+      }
+
       print('MockWebSocketClient: Attempting to reconnect...');
       try {
         await connect();
@@ -141,13 +148,24 @@ class MockWebSocketClient extends WebSocketClient {
         }
       } catch (e) {
         print('MockWebSocketClient: Reconnection attempt failed: $e');
+        _controller.addError(e);
       }
     });
   }
 
   @override
-  void send(String message) {
+  Future<void> send(String message) async {
     print('MockWebSocketClient: Attempting to send message: $message');
+
+    // Check connectivity before sending any message
+    final hasConnection = await _connectivityService.hasConnection();
+    if (!hasConnection) {
+      print(
+          'MockWebSocketClient: No internet connection. Cannot send message.');
+      _controller.addError(AppError.network('No internet connection'));
+      _reconnect();
+      return;
+    }
 
     // Check if connected before sending
     if (!_isConnected) {
@@ -188,7 +206,16 @@ class MockWebSocketClient extends WebSocketClient {
   void _startUpdateTimer() {
     print('MockWebSocketClient: Starting price update timer');
     _updateTimer?.cancel();
-    _updateTimer = Timer.periodic(const Duration(seconds: 2), (timer) {
+    _updateTimer = Timer.periodic(const Duration(seconds: 2), (timer) async {
+      // Check connectivity before sending updates
+      final hasConnection = await _connectivityService.hasConnection();
+      if (!hasConnection) {
+        print(
+            'MockWebSocketClient: No internet connection. Cannot send updates.');
+        _handleConnectionLost();
+        return;
+      }
+
       if (!_isConnected) {
         print(
             'MockWebSocketClient: Not sending updates because connection is closed');
@@ -204,7 +231,15 @@ class MockWebSocketClient extends WebSocketClient {
     });
   }
 
-  void _sendUpdate(String symbol) {
+  Future<void> _sendUpdate(String symbol) async {
+    // Check connectivity before sending update
+    final hasConnection = await _connectivityService.hasConnection();
+    if (!hasConnection) {
+      print('MockWebSocketClient: No internet connection. Cannot send update.');
+      _handleConnectionLost();
+      return;
+    }
+
     if (!_isConnected) {
       print('MockWebSocketClient: Cannot send update, not connected');
       return;

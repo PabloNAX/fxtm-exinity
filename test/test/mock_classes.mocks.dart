@@ -6,20 +6,21 @@
 import 'dart:async' as _i7;
 
 import 'package:dio/dio.dart' as _i2;
+import 'package:fxtm/core/exceptions/app_error.dart' as _i14;
 import 'package:fxtm/core/services/api_client.dart' as _i4;
 import 'package:fxtm/core/services/cache_service.dart' as _i6;
 import 'package:fxtm/core/services/connectivity_service.dart' as _i9;
 import 'package:fxtm/core/services/finnhub_service.dart' as _i10;
 import 'package:fxtm/core/services/web_socket_client.dart' as _i11;
 import 'package:fxtm/core/services/ws_service.dart' as _i12;
-import 'package:fxtm/data/models/candle_data.dart' as _i15;
+import 'package:fxtm/data/models/candle_data.dart' as _i16;
 import 'package:fxtm/data/models/candle_data_api_model.dart' as _i3;
 import 'package:fxtm/data/models/forex_pair.dart' as _i13;
 import 'package:fxtm/data/models/forex_symbols_api_model.dart' as _i8;
-import 'package:fxtm/data/repositories/forex_repository.dart' as _i14;
+import 'package:fxtm/data/repositories/forex_repository.dart' as _i15;
 import 'package:mockito/mockito.dart' as _i1;
 import 'package:mockito/src/dummies.dart' as _i5;
-import 'package:shared_preferences/shared_preferences.dart' as _i16;
+import 'package:shared_preferences/shared_preferences.dart' as _i17;
 
 // ignore_for_file: type=lint
 // ignore_for_file: avoid_redundant_argument_values
@@ -80,6 +81,15 @@ class MockApiClient extends _i1.Mock implements _i4.ApiClient {
           Invocation.getter(#dio),
         ),
       ) as _i2.Dio);
+
+  @override
+  String get apiBaseUrl => (super.noSuchMethod(
+        Invocation.getter(#apiBaseUrl),
+        returnValue: _i5.dummyValue<String>(
+          this,
+          Invocation.getter(#apiBaseUrl),
+        ),
+      ) as String);
 }
 
 /// A class which mocks [CacheService].
@@ -226,13 +236,14 @@ class MockWebSocketClient extends _i1.Mock implements _i11.WebSocketClient {
       ) as _i7.Future<_i7.Stream<dynamic>?>);
 
   @override
-  void send(String? message) => super.noSuchMethod(
+  _i7.Future<void> send(String? message) => (super.noSuchMethod(
         Invocation.method(
           #send,
           [message],
         ),
-        returnValueForMissingStub: null,
-      );
+        returnValue: _i7.Future<void>.value(),
+        returnValueForMissingStub: _i7.Future<void>.value(),
+      ) as _i7.Future<void>);
 
   @override
   void disconnect() => super.noSuchMethod(
@@ -264,8 +275,9 @@ class MockWsService extends _i1.Mock implements _i12.WsService {
   @override
   _i7.Future<void> subscribeToSymbols(
     List<String>? symbols,
-    void Function(_i13.ForexPair)? onPriceUpdate,
-  ) =>
+    void Function(_i13.ForexPair)? onPriceUpdate, {
+    dynamic Function(_i14.AppError)? onError,
+  }) =>
       (super.noSuchMethod(
         Invocation.method(
           #subscribeToSymbols,
@@ -273,6 +285,7 @@ class MockWsService extends _i1.Mock implements _i12.WsService {
             symbols,
             onPriceUpdate,
           ],
+          {#onError: onError},
         ),
         returnValue: _i7.Future<void>.value(),
         returnValueForMissingStub: _i7.Future<void>.value(),
@@ -286,12 +299,21 @@ class MockWsService extends _i1.Mock implements _i12.WsService {
         ),
         returnValueForMissingStub: null,
       );
+
+  @override
+  void dispose() => super.noSuchMethod(
+        Invocation.method(
+          #dispose,
+          [],
+        ),
+        returnValueForMissingStub: null,
+      );
 }
 
 /// A class which mocks [ForexRepository].
 ///
 /// See the documentation for Mockito's code generation for more information.
-class MockForexRepository extends _i1.Mock implements _i14.ForexRepository {
+class MockForexRepository extends _i1.Mock implements _i15.ForexRepository {
   MockForexRepository() {
     _i1.throwOnMissingStub(this);
   }
@@ -306,7 +328,7 @@ class MockForexRepository extends _i1.Mock implements _i14.ForexRepository {
       ) as _i7.Future<List<_i13.ForexPair>>);
 
   @override
-  _i7.Future<List<_i15.CandleData>> getHistoricalData(
+  _i7.Future<List<_i16.CandleData>> getHistoricalData(
     String? symbol, {
     String? resolution = r'D',
     int? from,
@@ -323,14 +345,14 @@ class MockForexRepository extends _i1.Mock implements _i14.ForexRepository {
           },
         ),
         returnValue:
-            _i7.Future<List<_i15.CandleData>>.value(<_i15.CandleData>[]),
-      ) as _i7.Future<List<_i15.CandleData>>);
+            _i7.Future<List<_i16.CandleData>>.value(<_i16.CandleData>[]),
+      ) as _i7.Future<List<_i16.CandleData>>);
 }
 
 /// A class which mocks [SharedPreferences].
 ///
 /// See the documentation for Mockito's code generation for more information.
-class MockSharedPreferences extends _i1.Mock implements _i16.SharedPreferences {
+class MockSharedPreferences extends _i1.Mock implements _i17.SharedPreferences {
   MockSharedPreferences() {
     _i1.throwOnMissingStub(this);
   }

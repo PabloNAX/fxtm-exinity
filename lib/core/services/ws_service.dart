@@ -8,6 +8,8 @@ import '../../data/models/forex_pair.dart';
 import '../../data/models/forex_update_ws_model.dart';
 
 /// Service for managing WebSocket connections and handling forex price updates.
+/// This service handles subscribing to forex pairs, receiving updates, and managing connection states, including reconnection logic.
+//TODO simplify the WS service , proper error handling
 class WsService {
   final WebSocketClient _wsClient;
   final Map<String, double> _lastPrices = {};
@@ -29,8 +31,7 @@ class WsService {
       if (stream == null) {
         print('Failed to connect to WebSocket.');
         if (onError != null) {
-          onError(
-              AppError.network('Не удалось установить WebSocket соединение'));
+          onError(AppError.network('Unable to establish WebSocket connection'));
         }
         return;
       }
@@ -49,13 +50,13 @@ class WsService {
         onError: (error) {
           print('WebSocket error: $error');
           if (onError != null) {
-            onError(AppError.network('Ошибка WebSocket соединения: $error'));
+            onError(AppError.network('WebSocket connection error: $error'));
           }
         },
         onDone: () {
           print('WebSocket connection closed');
           if (onError != null) {
-            onError(AppError.network('WebSocket соединение закрыто'));
+            onError(AppError.network('WebSocket connection closed'));
           }
         },
       );
@@ -69,7 +70,7 @@ class WsService {
     } catch (e) {
       print('WebSocket subscription error: $e');
       if (onError != null) {
-        onError(AppError.network('Ошибка подписки WebSocket: $e'));
+        onError(AppError.network('WebSocket subscription error: $e'));
       }
       rethrow; // Rethrow to allow Cubit to handle the error
     }
@@ -77,15 +78,15 @@ class WsService {
 
   void _startConnectionMonitoring(Function(AppError)? onError) {
     _connectionMonitorTimer?.cancel();
-    _connectionMonitorTimer = Timer.periodic(Duration(seconds: 10), (timer) {
+    _connectionMonitorTimer =
+        Timer.periodic(const Duration(seconds: 10), (timer) {
       // Check if we haven't received messages for too long
       if (_lastMessageTime != null) {
         final silenceDuration = DateTime.now().difference(_lastMessageTime!);
         if (silenceDuration > _maxSilenceDuration) {
           print('WebSocket silent for too long: $silenceDuration');
           if (onError != null) {
-            onError(
-                AppError.network('Соединение потеряно - нет данных с сервера'));
+            onError(AppError.network('Connection lost - no data from server'));
           }
 
           // Try to reconnect

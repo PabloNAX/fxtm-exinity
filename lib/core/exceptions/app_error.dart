@@ -1,13 +1,17 @@
 // lib/core/exceptions/app_error.dart
+/// Enum representing different types of application errors that can occur.
+/// This helps categorize errors for better handling and user feedback.
 enum ErrorType {
-  network, // Проблемы с сетью
-  server, // Проблемы с сервером
-  auth, // Проблемы с авторизацией
-  data, // Проблемы с данными
-  timeout, // Тайм-ауты
-  unknown // Все остальное
+  network, // Network issues
+  server, // Server issues
+  auth, // Authentication issues
+  data, // Data-related issues
+  timeout, // Timeout issues
+  unknown // All other issues
 }
 
+/// Class representing an application error, implementing the Exception interface.
+/// This class encapsulates error details, including a message, type, and original exception.
 class AppError implements Exception {
   final String message;
   final ErrorType type;
@@ -15,42 +19,47 @@ class AppError implements Exception {
 
   AppError({required this.message, required this.type, this.originalException});
 
-  // Фабричный метод для создания ошибки определенного типа
+  // Factory method for creating a network error
   factory AppError.network([dynamic originalException]) {
     return AppError(
-        message: 'Нет подключения к интернету',
+        message: 'No internet connection',
         type: ErrorType.network,
         originalException: originalException);
   }
 
+  // Factory method for creating a server error
   factory AppError.server([dynamic originalException]) {
     return AppError(
-        message: 'Ошибка сервера',
+        message: 'Server error',
         type: ErrorType.server,
         originalException: originalException);
   }
 
+  // Factory method for creating an authentication error
   factory AppError.auth([dynamic originalException]) {
     return AppError(
-        message: 'Ошибка авторизации',
+        message: 'Authentication error',
         type: ErrorType.auth,
         originalException: originalException);
   }
 
+  // Factory method for creating a data error
   factory AppError.data([dynamic originalException]) {
     return AppError(
-        message: 'Ошибка данных',
+        message: 'Data error',
         type: ErrorType.data,
         originalException: originalException);
   }
 
+  // Factory method for creating a timeout error
   factory AppError.timeout([dynamic originalException]) {
     return AppError(
-        message: 'Превышено время ожидания',
+        message: 'Timeout exceeded',
         type: ErrorType.timeout,
         originalException: originalException);
   }
 
+  // Factory method for creating an unknown error
   factory AppError.unknown(String message, [dynamic originalException]) {
     return AppError(
         message: message,
