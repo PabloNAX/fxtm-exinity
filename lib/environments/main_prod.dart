@@ -1,4 +1,4 @@
-//prod
+/// Main entry point for the production version of the FXTM Forex Tracker application.
 import 'package:flutter/material.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:shared_preferences/shared_preferences.dart';
@@ -13,37 +13,35 @@ import '../data/repositories/forex_repository.dart';
 import '../pages/main_page.dart';
 
 void main() async {
-  // Получение API ключей из .env файла (или используйте константы для тестирования)
+  // Retrieve API keys from the .env file (or use constants for testing)
   final apiKey = dotenv.env['API_KEY'] ?? 'your_api_key_here';
 
-  // Инициализация SharedPreferences
+  // Initialize SharedPreferences
   final prefs = await SharedPreferences.getInstance();
 
-  // Инициализация ConnectivityService
+  // Initialize ConnectivityService
   final connectivityService = ConnectivityService();
 
-  // Инициализация сервисов
+  // Initialize services
   final apiClient = ApiClient(
     apiKey: apiKey,
     connectivityService: connectivityService,
   );
 
-  // Инициализация сервисов
+  // Initialize Finnhub service
   final finnhubService = FinnhubServiceImpl(apiClient);
 
   final cacheService = CacheService(prefs);
-  // Every fresh launch clear the cash to fetch the data from api first
+  // Clear the cache on fresh launch to fetch data from the API first
   await cacheService.clearCache();
 
-  // Use the mock service instead
-
-  // Инициализация репозитория
+  // Initialize repository
   final forexRepository = ForexRepository(
     service: finnhubService,
     cacheService: cacheService,
   );
 
-  // Инициализация WebSocket
+  // Initialize WebSocket
   final wsClient = WebSocketClient(
       apiToken: apiKey, connectivityService: connectivityService);
   final wsService = WsService(wsClient: wsClient);

@@ -3,6 +3,7 @@ import 'package:shared_preferences/shared_preferences.dart';
 
 import '../../data/models/forex_symbols_api_model.dart';
 
+/// Service for caching forex pairs using SharedPreferences.
 class CacheService {
   static const String _forexPairsKey = 'forex_pairs_cache';
   static const Duration _cacheDuration = Duration(minutes: 5);
@@ -29,7 +30,7 @@ class CacheService {
     final timestamp = data['timestamp'] as int;
     final now = DateTime.now().millisecondsSinceEpoch;
 
-    // Проверяем не устарел ли кэш
+    // Check if the cache has expired
     if (now - timestamp > _cacheDuration.inMilliseconds) {
       await _prefs.remove(_forexPairsKey);
       return null;

@@ -5,6 +5,7 @@ import 'package:fxtm/core/services/web_socket_client.dart';
 import '../../data/models/forex_pair.dart';
 import '../../data/models/forex_update_ws_model.dart';
 
+/// Service for managing WebSocket connections and handling forex price updates.
 class WsService {
   final WebSocketClient _wsClient;
   final Map<String, double> _lastPrices = {};
@@ -15,24 +16,36 @@ class WsService {
     List<String> symbols,
     void Function(ForexPair) onPriceUpdate,
   ) async {
-    // final stream = _wsClient.connect();
-    // if (stream == null) return;
+    try {
+      print('Attempting to connect to WebSocket...');
+      final stream = await _wsClient.connect();
+      if (stream == null) {
+        print('Failed to connect to WebSocket.');
+        return;
+      }
 
-    final stream = await _wsClient.connect();
-    if (stream == null) return;
+      print('Connected to WebSocket. Subscribing to symbols...');
+      stream.listen(
+        (message) => _handleMessage(message, onPriceUpdate),
+        onError: (error) {
+          print('WebSocket error: $error');
+          // Optionally handle error display to the user if needed
+        },
+      );
 
-    stream.listen(
-      (message) => _handleMessage(message, onPriceUpdate),
-      onError: (error) => print('WebSocket error: $error'),
-    );
-
-    for (final symbol in symbols) {
-      _subscribe(symbol);
+      for (final symbol in symbols) {
+        _subscribe(symbol);
+      }
+    } catch (e) {
+      print('WebSocket subscription error: $e');
+      // Do not throw an exception here, just log the error
+      // This allows the application to continue running even without WebSocket
     }
   }
 
   void _subscribe(String symbol) {
     final message = {'type': 'subscribe', 'symbol': symbol};
+    print('Subscribing to symbol: $symbol');
     _wsClient.send(jsonEncode(message));
   }
 
@@ -41,7 +54,7 @@ class WsService {
     try {
       final Map<String, dynamic> jsonData = jsonDecode(message);
 
-// If we receive a ping, respond with a pong immediately
+      // If we receive a ping, respond with a pong immediately
       if (jsonData['type'] == 'ping') {
         _logWebSocketMessage("pong", prefix: 'SENT');
         _wsClient.send(jsonEncode({'type': 'pong'}));
@@ -58,7 +71,7 @@ class WsService {
           final change = data.price - oldPrice;
           final percentChange = oldPrice != 0 ? (change / oldPrice) * 100 : 0.0;
 
-          // Обновляем последнюю цену
+          // Update the last price
           _lastPrices[data.symbol] = data.price;
 
           final pair = ForexPair(
@@ -68,6 +81,7 @@ class WsService {
             percentChange: percentChange,
           );
 
+          print('Price update for ${data.symbol}: ${data.price} (change: $change, percentChange: $percentChange)');
           onPriceUpdate(pair);
         }
       }
@@ -78,6 +92,7 @@ class WsService {
   }
 
   void unsubscribeFromAll() {
+    print('Unsubscribing from all symbols...');
     _wsClient.send(jsonEncode({'type': 'unsubscribe', 'symbol': 'all'}));
     _wsClient.disconnect();
   }

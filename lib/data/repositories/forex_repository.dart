@@ -1,6 +1,3 @@
-import 'package:shared_preferences/shared_preferences.dart';
-
-import '../../core/exceptions/forex_exception.dart';
 import '../../core/services/cache_service.dart';
 import '../../core/services/finnhub_service.dart';
 import '../../core/utils/constants.dart';
@@ -9,6 +6,7 @@ import '../models/candle_data_api_model.dart';
 import '../models/forex_pair.dart';
 import '../models/forex_symbols_api_model.dart';
 
+/// Repository for managing forex data, including fetching and caching forex pairs and historical data.
 class ForexRepository {
   final FinnhubService _service;
   final CacheService _cacheService;
@@ -33,12 +31,12 @@ class ForexRepository {
       await _cacheService.cacheForexPairs(symbols);
       return _convertToForexPairs(symbols);
     } catch (e) {
-      throw ForexException('Failed to get forex pairs: $e',
-          type: ErrorType.unknown);
+      // Rethrow to handle errors at a different layer
+      rethrow;
     }
   }
 
-  //TODO Implement Date params for fetchHistoricalData API call
+  // TODO: Implement date parameters for fetchHistoricalData API call
   Future<List<CandleData>> getHistoricalData(
     String symbol, {
     String resolution = 'D',
@@ -50,15 +48,12 @@ class ForexRepository {
           resolution: resolution, from: from, to: to);
       return _convertToCandleData(candleDataApiModel);
     } catch (e) {
-      throw ForexException(
-        'Failed to get historical data: $e',
-        type: ErrorType.unknown,
-      );
+      rethrow; // Rethrow to handle errors at a different layer
     }
   }
 
   List<CandleData> _convertToCandleData(CandleDataApiModel apiModel) {
-    List<CandleData> candles = [];
+    final List<CandleData> candles = [];
     for (int i = 0; i < apiModel.t.length; i++) {
       candles.add(CandleData(
         open: apiModel.o[i],
@@ -73,7 +68,6 @@ class ForexRepository {
   }
 
   List<ForexPair> _convertToForexPairs(List<ForexSymbolsApiModel> symbols) {
-    // Your existing implementation
     symbols = symbols
         .where((symbol) => defaultPairs.contains(symbol.symbol))
         .toList();

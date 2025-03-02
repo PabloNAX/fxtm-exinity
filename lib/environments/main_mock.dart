@@ -1,5 +1,6 @@
 // lib/environments/main_mock.dart
 
+/// Main entry point for the mock version of the FXTM Forex Tracker application.
 import 'package:flutter/material.dart';
 import 'package:fxtm/core/services/connectivity_service.dart';
 import 'package:shared_preferences/shared_preferences.dart';
@@ -14,24 +15,24 @@ import '../pages/main_page.dart';
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
 
-  // Инициализация SharedPreferences
+  // Initialize SharedPreferences
   final prefs = await SharedPreferences.getInstance();
 
-  // Инициализация мок-сервисов
+  // Initialize mock services
   final connectivityService = ConnectivityService();
   final mockFinnhubService = MockFinnhubService();
   final cacheService = CacheService(prefs);
 
-  // Очистка кэша при запуске для получения свежих мок-данных
+  // Clear cache on startup to get fresh mock data
   await cacheService.clearCache();
 
-  // Инициализация репозитория с мок-сервисом
+  // Initialize repository with mock service
   final forexRepository = ForexRepository(
     service: mockFinnhubService,
     cacheService: cacheService,
   );
 
-  // Инициализация мок WebSocket
+  // Initialize mock WebSocket
   final mockWsClient = MockWebSocketClient(
     connectivityService: connectivityService,
   );
@@ -62,7 +63,7 @@ class FXTMApp extends StatelessWidget {
       title: 'FXTM Forex Tracker (Mock)',
       theme: ThemeData(
         primarySwatch: Colors.blue,
-        // Добавьте визуальную индикацию мок-режима
+        // Add visual indication of mock mode
         scaffoldBackgroundColor: Colors.white,
         appBarTheme: AppBarTheme(
           backgroundColor: Colors.blue.shade800,

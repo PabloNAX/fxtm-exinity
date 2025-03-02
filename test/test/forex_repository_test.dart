@@ -2,7 +2,6 @@
 
 import 'package:flutter_test/flutter_test.dart';
 import 'package:mockito/mockito.dart';
-import 'package:fxtm/core/exceptions/forex_exception.dart';
 import 'package:fxtm/data/models/candle_data.dart';
 import 'package:fxtm/data/models/forex_pair.dart';
 import 'package:fxtm/data/repositories/forex_repository.dart';
@@ -60,15 +59,15 @@ void main() {
       verify(mockCacheService.cacheForexPairs(mockSymbols)).called(1);
     });
 
-    test('should throw ForexException when an error occurs', () async {
+    test('should rethrow exception when an error occurs', () async {
       // Arrange
+      final testException = Exception('API error');
       when(mockCacheService.getCachedForexPairs())
           .thenAnswer((_) async => null);
-      when(mockFinnhubService.fetchForexPairs())
-          .thenThrow(Exception('API error'));
+      when(mockFinnhubService.fetchForexPairs()).thenThrow(testException);
 
       // Act & Assert
-      expect(() => repository.getForexPairs(), throwsA(isA<ForexException>()));
+      expect(() => repository.getForexPairs(), throwsA(equals(testException)));
     });
   });
 
@@ -102,14 +101,15 @@ void main() {
       )).called(1);
     });
 
-    test('should throw ForexException when an error occurs', () async {
+    test('should rethrow exception when an error occurs', () async {
       // Arrange
+      final testException = Exception('API error');
       when(mockFinnhubService.fetchHistoricalData(
         'OANDA:EUR_USD',
         resolution: 'D',
         from: 1646092800,
         to: 1646265600,
-      )).thenThrow(Exception('API error'));
+      )).thenThrow(testException);
 
       // Act & Assert
       expect(
@@ -119,7 +119,7 @@ void main() {
           from: 1646092800,
           to: 1646265600,
         ),
-        throwsA(isA<ForexException>()),
+        throwsA(equals(testException)),
       );
     });
   });

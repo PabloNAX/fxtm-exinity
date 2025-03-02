@@ -2,9 +2,9 @@
 
 import 'package:dio/dio.dart';
 import 'package:pretty_dio_logger/pretty_dio_logger.dart';
-import '../exceptions/forex_exception.dart';
 import 'connectivity_service.dart';
 
+/// Client for making API requests with Dio, including connectivity checks.
 class ApiClient {
   final String apiKey;
   final Dio dio;
@@ -21,9 +21,12 @@ class ApiClient {
   void _initDio() {
     dio.options
       ..baseUrl = 'https://finnhub.io/api/v1'
-      ..queryParameters = {'token': apiKey};
+      ..queryParameters = {'token': apiKey}
+      ..connectTimeout = const Duration(seconds: 10)
+      ..receiveTimeout = const Duration(seconds: 10)
+      ..sendTimeout = const Duration(seconds: 10);
 
-    // Logger для API-запросов
+    // Logger for API requests
     dio.interceptors.add(PrettyDioLogger(
       requestHeader: true,
       requestBody: true,
@@ -32,60 +35,28 @@ class ApiClient {
       error: true,
     ));
 
-    // Интерцептор для проверки подключения
+    // Interceptor for checking connectivity
     dio.interceptors.add(
       InterceptorsWrapper(
         onRequest: (options, handler) async {
-          // Проверяем подключение перед каждым запросом
+          // Check connectivity before each request
           final hasConnection = await _connectivityService.hasConnection();
           if (!hasConnection) {
             return handler.reject(
               DioException(
                 requestOptions: options,
                 type: DioExceptionType.connectionError,
-                error: 'Нет подключения к интернету',
+                error: 'No internet connection',
               ),
             );
           }
           return handler.next(options);
         },
-        onError: (DioException e, ErrorInterceptorHandler handler) {
-          // Преобразуем DioException в ForexException
-          final forexException = _handleDioError(e);
-          throw forexException; // Выбрасываем ForexException
+        onError: (DioException error, ErrorInterceptorHandler handler) {
+          print('API Error: ${error.type} - ${error.message}');
+          return handler.reject(error);
         },
       ),
     );
-  }
-
-  // Преобразует DioException в ForexException
-  ForexException _handleDioError(DioException e) {
-    switch (e.type) {
-      case DioExceptionType.connectionTimeout:
-      case DioExceptionType.sendTimeout:
-      case DioExceptionType.receiveTimeout:
-        return ForexException.fromType(ErrorType.timeout, e);
-      case DioExceptionType.connectionError:
-        return ForexException.fromType(ErrorType.network, e);
-      case DioExceptionType.badResponse:
-        final statusCode = e.response?.statusCode;
-        if (statusCode == null) {
-          return ForexException.fromType(ErrorType.unknown, e);
-        }
-
-        if (statusCode >= 500) {
-          return ForexException.fromType(ErrorType.server, e);
-        } else if (statusCode == 401 || statusCode == 403) {
-          return ForexException.fromType(ErrorType.auth, e);
-        } else if (statusCode == 404) {
-          return ForexException.fromType(ErrorType.notFound, e);
-        } else if (statusCode == 429) {
-          return ForexException.fromType(ErrorType.rateLimit, e);
-        } else {
-          return ForexException.fromType(ErrorType.unknown, e);
-        }
-      default:
-        return ForexException.fromType(ErrorType.unknown, e);
-    }
   }
 }

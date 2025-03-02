@@ -6,6 +6,7 @@ import '../../core/services/ws_service.dart';
 import '../../data/models/forex_pair.dart';
 import 'mock_web_socket_client.dart';
 
+/// Mock implementation of the WebSocket service for testing purposes.
 class MockWsService extends WsService {
   final MockWebSocketClient _mockWsClient;
   final Map<String, double> _lastPrices = {};
@@ -24,20 +25,20 @@ class MockWsService extends WsService {
   ) async {
     _onPriceUpdate = onPriceUpdate;
 
-    // Подписываемся на обновления от мок-клиента
+    // Subscribe to updates from the mock client
     final stream = await _mockWsClient.connect();
     if (stream == null) return;
 
-    // Отменяем предыдущую подписку, если она существует
+    // Cancel previous subscription if it exists
     await _subscription?.cancel();
 
-    // Подписываемся на обновления
+    // Subscribe to updates
     _subscription = stream.listen(
       (message) => _handleMessage(message, onPriceUpdate),
       onError: (error) => print('WebSocket error: $error'),
     );
 
-    // Подписываемся на символы
+    // Subscribe to symbols
     for (final symbol in symbols) {
       final subscribeMessage = {'type': 'subscribe', 'symbol': symbol};
       _mockWsClient.send(jsonEncode(subscribeMessage));
@@ -59,7 +60,7 @@ class MockWsService extends WsService {
           final change = price - oldPrice;
           final percentChange = oldPrice != 0 ? (change / oldPrice) * 100 : 0.0;
 
-          // Обновляем последнюю цену
+          // Update the last price
           _lastPrices[symbol] = price;
 
           final pair = ForexPair(
@@ -86,13 +87,13 @@ class MockWsService extends WsService {
     _mockWsClient.disconnect();
   }
 
-  // Метод для приостановки обновлений
+  // Method to pause updates
   Future<void> pauseWebSocket() async {
     await _subscription?.cancel();
     _mockWsClient.disconnect();
   }
 
-  // Метод для возобновления обновлений
+  // Method to resume updates
   Future<void> resumeWebSocket() async {
     if (_onPriceUpdate != null) {
       final symbols = _lastPrices.keys.toList();

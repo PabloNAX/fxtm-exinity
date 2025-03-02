@@ -1,5 +1,6 @@
 // lib/data/models/candle_data.dart
 
+/// Model representing candle data for financial charts.
 class CandleData {
   final double open;
   final double high;
@@ -17,10 +18,10 @@ class CandleData {
     required this.volume,
   });
 
-  // Геттер для получения даты из timestamp
+  // Getter to retrieve the date from the timestamp
   DateTime get date => DateTime.fromMillisecondsSinceEpoch(timestamp * 1000);
 
-  // Если вам нужно создавать объект из JSON напрямую
+  // Factory method to create an object from JSON directly
   factory CandleData.fromJson(Map<String, dynamic> json) {
     return CandleData(
       open: json['open'],

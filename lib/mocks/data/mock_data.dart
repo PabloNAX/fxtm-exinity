@@ -4,31 +4,33 @@ import '../../data/models/candle_data_api_model.dart';
 import '../../data/models/forex_pair.dart';
 import '../../data/models/forex_symbols_api_model.dart';
 
+/// Mock data provider for forex symbols and historical data.
+/// AI GENERATED
 class MockData {
-  // Список валютных пар
+  // List of forex pairs
   static List<ForexSymbolsApiModel> getForexSymbols() {
     return [
-      ForexSymbolsApiModel(
+      const ForexSymbolsApiModel(
         description: 'Euro / US Dollar',
         displaySymbol: 'EUR/USD',
         symbol: 'OANDA:EUR_USD',
       ),
-      ForexSymbolsApiModel(
+      const ForexSymbolsApiModel(
         description: 'British Pound / US Dollar',
         displaySymbol: 'GBP/USD',
         symbol: 'OANDA:GBP_USD',
       ),
-      ForexSymbolsApiModel(
+      const ForexSymbolsApiModel(
         description: 'US Dollar / Japanese Yen',
         displaySymbol: 'USD/JPY',
         symbol: 'OANDA:USD_JPY',
       ),
-      ForexSymbolsApiModel(
+      const ForexSymbolsApiModel(
         description: 'Australian Dollar / US Dollar',
         displaySymbol: 'AUD/USD',
         symbol: 'OANDA:AUD_USD',
       ),
-      ForexSymbolsApiModel(
+      const ForexSymbolsApiModel(
         description: 'US Dollar / Swiss Franc',
         displaySymbol: 'USD/CHF',
         symbol: 'OANDA:USD_CHF',
@@ -36,7 +38,7 @@ class MockData {
     ];
   }
 
-  // Начальные данные для валютных пар
+  // Initial data for forex pairs
   static List<ForexPair> getInitialForexPairs() {
     return [
       ForexPair(
@@ -72,7 +74,7 @@ class MockData {
     ];
   }
 
-  // Генерация исторических данных
+  // Generate historical data
   static CandleDataApiModel getHistoricalData(String symbol, {int days = 30}) {
     final now = DateTime.now();
     final List<int> timestamps = [];
@@ -82,7 +84,7 @@ class MockData {
     final List<double> closes = [];
     final List<int> volumes = [];
 
-    // Базовая цена в зависимости от символа
+    // Base price depending on the symbol
     double basePrice = 1.0;
     if (symbol == 'OANDA:EUR_USD') basePrice = 1.09;
     if (symbol == 'OANDA:GBP_USD') basePrice = 1.26;
@@ -90,16 +92,16 @@ class MockData {
     if (symbol == 'OANDA:AUD_USD') basePrice = 0.65;
     if (symbol == 'OANDA:USD_CHF') basePrice = 0.90;
 
-    // Генерация данных для каждого дня
+    // Generate data for each day
     for (int i = days; i >= 0; i--) {
       final date = now.subtract(Duration(days: i));
       final timestamp = date.millisecondsSinceEpoch ~/ 1000;
 
-      // Добавляем небольшую случайность к ценам
-      final random = (date.day % 5 - 2) / 100; // -0.02 до 0.02
+      // Add slight randomness to prices
+      final random = (date.day % 5 - 2) / 100; // -0.02 to 0.02
       final open = basePrice * (1 + random);
       final close =
-          open * (1 + (date.day % 3 - 1) / 200); // небольшое изменение
+          open * (1 + (date.day % 3 - 1) / 200); // slight change
       final high = [open, close].reduce((a, b) => a > b ? a : b) * 1.005;
       final low = [open, close].reduce((a, b) => a < b ? a : b) * 0.995;
       final volume = 1000 + (date.day * 100);
@@ -111,7 +113,7 @@ class MockData {
       closes.add(close);
       volumes.add(volume);
 
-      // Обновляем базовую цену для следующего дня
+      // Update base price for the next day
       basePrice = close;
     }
 

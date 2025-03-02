@@ -1,4 +1,5 @@
-final List<String> defaultPairs = [
+/// Constants and Enums
+const List<String> defaultPairs = [
   'OANDA:EUR_USD',
   'OANDA:GBP_USD',
   'OANDA:USD_JPY',
@@ -7,6 +8,22 @@ final List<String> defaultPairs = [
   'OANDA:USD_CHF',
   'OANDA:EUR_GBP',
   'OANDA:EUR_JPY'
+];
+
+// For daily and weekly charts, show date
+const monthNames = [
+  'Jan',
+  'Feb',
+  'Mar',
+  'Apr',
+  'May',
+  'Jun',
+  'Jul',
+  'Aug',
+  'Sep',
+  'Oct',
+  'Nov',
+  'Dec'
 ];
 
 enum WebSocketStatus { disconnected, connected, paused }

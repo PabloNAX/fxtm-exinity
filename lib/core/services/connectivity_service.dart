@@ -3,10 +3,11 @@
 import 'dart:async';
 import 'package:connectivity_plus/connectivity_plus.dart';
 
+/// Service for checking internet connectivity status.
 class ConnectivityService {
   final Connectivity _connectivity = Connectivity();
 
-  // Проверяет подключение к интернету
+  // Checks for internet connectivity
   Future<bool> hasConnection() async {
     try {
       final connectivityResult = await _connectivity.checkConnectivity();

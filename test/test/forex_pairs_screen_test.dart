@@ -5,6 +5,8 @@ import 'package:fxtm/pages/forex_list/forex_pairs_screen.dart';
 
 import 'mock_classes.mocks.dart';
 
+/// Unit tests for the ForexPairsScreen widget, ensuring it renders correctly and displays loading indicators as expected.
+/// These tests verify the integration of the screen with the mocked repository and WebSocket service.
 void main() {
   late MockForexRepository mockRepository;
   late MockWsService mockWsService;
@@ -13,12 +15,12 @@ void main() {
     mockRepository = MockForexRepository();
     mockWsService = MockWsService();
 
-    // Настраиваем моки для синхронного ответа
+    // Set up mocks for synchronous responses
     when(mockRepository.getForexPairs()).thenAnswer((_) async => []);
     when(mockWsService.subscribeToSymbols(any, any)).thenAnswer((_) async {});
   });
 
-  // Вспомогательная функция для создания тестового виджета
+  // Helper function to create the test widget
   Widget createTestWidget() {
     return MaterialApp(
       home: ForexPairsScreen(
@@ -30,19 +32,19 @@ void main() {
 
   testWidgets('ForexPairsScreen renders without crashing',
       (WidgetTester tester) async {
-    // Рендерим виджет
+    // Render the widget
     await tester.pumpWidget(createTestWidget());
 
-    // Проверяем, что виджет отрендерился без ошибок
+    // Verify that the widget renders without errors
     expect(find.byType(ForexPairsScreen), findsOneWidget);
   });
 
   testWidgets('ForexPairsScreen shows CircularProgressIndicator initially',
       (WidgetTester tester) async {
-    // Рендерим виджет
+    // Render the widget
     await tester.pumpWidget(createTestWidget());
 
-    // Проверяем, что отображается индикатор загрузки
+    // Verify that the loading indicator is displayed
     expect(find.byType(CircularProgressIndicator), findsOneWidget);
   });
 }

@@ -7,6 +7,7 @@ import '../../core/services/web_socket_client.dart';
 import '../../core/services/connectivity_service.dart';
 import '../data/mock_data.dart';
 
+/// Mock implementation of the WebSocketClient for testing purposes.
 class MockWebSocketClient extends WebSocketClient {
   final StreamController<dynamic> _controller =
       StreamController<dynamic>.broadcast();
@@ -29,13 +30,13 @@ class MockWebSocketClient extends WebSocketClient {
 
     _isConnected = true;
 
-    // Инициализация начальных цен
+    // Initialize initial prices
     final initialPairs = MockData.getInitialForexPairs();
     for (var pair in initialPairs) {
       _prices[pair.symbol] = pair.currentPrice;
     }
 
-    // Запуск таймера для имитации обновлений в реальном времени
+    // Start timer to simulate real-time updates
     _startUpdateTimer();
 
     return _controller.stream;
@@ -52,7 +53,7 @@ class MockWebSocketClient extends WebSocketClient {
           _subscribedSymbols.add(symbol);
           print('Subscribed to: $symbol');
 
-          // Отправляем начальное обновление для этого символа
+          // Send initial update for this symbol
           _sendUpdate(symbol);
         }
       } else if (data['type'] == 'unsubscribe') {
@@ -72,10 +73,10 @@ class MockWebSocketClient extends WebSocketClient {
 
   void _startUpdateTimer() {
     _updateTimer?.cancel();
-    _updateTimer = Timer.periodic(Duration(seconds: 2), (timer) {
+    _updateTimer = Timer.periodic(const Duration(seconds: 2), (timer) {
       if (_subscribedSymbols.isEmpty) return;
 
-      // Обновляем все подписанные символы
+      // Update all subscribed symbols
       for (var symbol in _subscribedSymbols) {
         _sendUpdate(symbol);
       }
@@ -85,13 +86,13 @@ class MockWebSocketClient extends WebSocketClient {
   void _sendUpdate(String symbol) {
     if (!_subscribedSymbols.contains(symbol)) return;
 
-    // Генерируем новую цену с небольшим изменением
+    // Generate a new price with a slight change
     final currentPrice = _prices[symbol] ?? 1.0;
     final changePercent = (_random.nextDouble() * 0.004) - 0.002; // ±0.2%
     final newPrice = currentPrice * (1 + changePercent);
     _prices[symbol] = newPrice;
 
-    // Создаем и отправляем обновление
+    // Create and send update
     final update = {
       "data": [
         {

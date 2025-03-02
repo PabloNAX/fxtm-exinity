@@ -2,8 +2,8 @@
 
 import 'package:bloc_test/bloc_test.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:fxtm/core/exceptions/app_error.dart';
 import 'package:mockito/mockito.dart';
-import 'package:fxtm/core/exceptions/forex_exception.dart';
 import 'package:fxtm/pages/history/cubits/history_cubit.dart';
 import 'package:fxtm/pages/history/cubits/history_state.dart';
 import 'package:fxtm/mocks/data/mock_data.dart';
@@ -83,8 +83,8 @@ void main() {
         from: 1646092800,
         to: 1646265600,
       )).thenThrow(
-        ForexException('Error loading historical data',
-            type: ErrorType.network),
+        AppError(
+            message: 'Error loading historical data', type: ErrorType.network),
       );
       return cubit;
     },

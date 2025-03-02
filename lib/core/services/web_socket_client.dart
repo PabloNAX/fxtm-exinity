@@ -2,9 +2,10 @@
 
 import 'package:web_socket_channel/web_socket_channel.dart';
 import 'dart:async';
-import '../exceptions/forex_exception.dart';
+import '../exceptions/app_error.dart';
 import 'connectivity_service.dart';
 
+/// Client for managing WebSocket connections and handling messages.
 class WebSocketClient {
   final String apiToken;
   final ConnectivityService _connectivityService;
@@ -24,15 +25,23 @@ class WebSocketClient {
   bool get isConnected => _isConnected;
 
   Future<Stream<dynamic>?> connect() async {
-    if (_isConnected) return _controller?.stream;
-    if (_isReconnecting) return null;
-
-    // Проверяем подключение перед установкой WebSocket
-    final hasConnection = await _connectivityService.hasConnection();
-    if (!hasConnection) {
-      throw ForexException.fromType(ErrorType.network);
+    if (_isConnected) {
+      print('Already connected to WebSocket.');
+      return _controller?.stream;
+    }
+    if (_isReconnecting) {
+      print('Attempting to reconnect to WebSocket...');
+      return null;
     }
 
+    // Check connectivity before establishing WebSocket
+    final hasConnection = await _connectivityService.hasConnection();
+    if (!hasConnection) {
+      print('No internet connection. Cannot connect to WebSocket.');
+      throw AppError.network();
+    }
+
+    print('Connecting to WebSocket...');
     try {
       _channel = WebSocketChannel.connect(
         Uri.parse('$baseUrl?token=$apiToken'),
@@ -40,7 +49,7 @@ class WebSocketClient {
 
       _controller = StreamController<dynamic>.broadcast();
 
-      // Слушаем сообщения
+      // Listen for messages
       _channel?.stream.listen(
         (data) {
           final controller = _controller;
@@ -59,12 +68,14 @@ class WebSocketClient {
       );
 
       _isConnected = true;
+      print('Successfully connected to WebSocket.');
       _startPingTimer();
 
       return _controller?.stream;
     } catch (e) {
       _isConnected = false;
-      throw ForexException.fromType(ErrorType.network, e);
+      print('Failed to connect to WebSocket: $e');
+      throw AppError.network(e);
     }
   }
 
@@ -72,33 +83,41 @@ class WebSocketClient {
     if (_isConnected && _channel != null) {
       try {
         _channel?.sink.add(message);
+        print('Sent message: $message');
       } catch (e) {
         print('WebSocket Send Error: $e');
         _reconnect();
       }
+    } else {
+      print('Cannot send message, WebSocket is not connected.');
     }
   }
 
   void _startPingTimer() {
     _pingTimer?.cancel();
-    _pingTimer = Timer.periodic(Duration(seconds: 30), (timer) {
+    _pingTimer = Timer.periodic(const Duration(seconds: 30), (timer) {
       send('{"type":"ping"}');
+      print('Sent ping to WebSocket.');
     });
   }
 
   void _reconnect() {
-    if (_isReconnecting) return;
+    if (_isReconnecting) {
+      print('Already attempting to reconnect to WebSocket.');
+      return;
+    }
 
     _isReconnecting = true;
+    print('Disconnecting from WebSocket to attempt reconnection...');
     disconnect();
 
-    Future.delayed(Duration(seconds: 5), () async {
+    Future.delayed(const Duration(seconds: 5), () async {
       _isReconnecting = false;
-
+      print('Attempting to reconnect to WebSocket...');
       try {
         await connect();
       } catch (e) {
-        // Игнорируем ошибки при переподключении
+        print('Reconnection attempt failed: $e');
       }
     });
   }
@@ -110,6 +129,7 @@ class WebSocketClient {
     _controller?.close();
     _channel = null;
     _controller = null;
+    print('Disconnected from WebSocket.');
   }
 
   void dispose() {

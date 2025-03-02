@@ -1,12 +1,14 @@
 import 'package:bloc_test/bloc_test.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:fxtm/core/exceptions/app_error.dart';
 import 'package:mockito/mockito.dart';
-import 'package:fxtm/core/exceptions/forex_exception.dart';
 import 'package:fxtm/pages/forex_list/cubits/forex_pairs_cubit.dart';
 import 'package:fxtm/pages/forex_list/cubits/forex_pairs_state.dart';
 import 'package:fxtm/mocks/data/mock_data.dart';
 import 'mock_classes.mocks.dart';
 
+/// Unit tests for the ForexPairsCubit, which manages the state of forex pairs, including loading data and handling WebSocket subscriptions.
+/// These tests ensure that the cubit correctly emits states based on the success or failure of data loading and WebSocket operations.
 void main() {
   late MockForexRepository mockRepository;
   late MockWsService mockWsService;
@@ -48,7 +50,7 @@ void main() {
     'emits [ForexPairsLoading, ForexPairsError] when loadForexPairs fails',
     build: () {
       when(mockRepository.getForexPairs()).thenThrow(
-        ForexException('Error loading forex pairs', type: ErrorType.network),
+        AppError(message: 'Error loading forex pairs', type: ErrorType.network),
       );
       return cubit;
     },
@@ -63,68 +65,68 @@ void main() {
     },
   );
 
-  // Тест для pauseWebSocket
+  // Test for pauseWebSocket
   blocTest<ForexPairsCubit, ForexPairsState>(
     'pauseWebSocket should unsubscribe from WebSocket',
     build: () {
-      // Подготавливаем кубит
+      // Prepare the cubit
       final mockPairs = MockData.getInitialForexPairs();
 
-      // Мокируем необходимые методы
+      // Mock necessary methods
       when(mockRepository.getForexPairs()).thenAnswer((_) async => mockPairs);
       when(mockWsService.subscribeToSymbols(any, any)).thenAnswer((_) async {});
       when(mockWsService.unsubscribeFromAll()).thenAnswer((_) async {});
 
-      // Создаем кубит и загружаем данные, чтобы установить WebSocket в connected
+      // Create cubit and load data to set WebSocket to connected
       cubit.loadForexPairs();
 
-      // Ждем, пока loadForexPairs завершится
+      // Wait for loadForexPairs to complete
       return cubit;
     },
     act: (cubit) async {
-      // Очищаем предыдущие взаимодействия перед тестом
+      // Clear previous interactions before the test
       clearInteractions(mockWsService);
 
-      // Вызываем метод, который тестируем
+      // Call the method we are testing
       await cubit.pauseWebSocket();
     },
-    expect: () => anything, // Игнорируем эмитированные состояния
+    expect: () => anything, // Ignore emitted states
     verify: (cubit) {
-      // Проверяем, что метод unsubscribeFromAll был вызван
+      // Verify that the unsubscribeFromAll method was called
       verify(mockWsService.unsubscribeFromAll()).called(1);
     },
   );
 
-  // Тест для resumeWebSocket
+  // Test for resumeWebSocket
   blocTest<ForexPairsCubit, ForexPairsState>(
     'resumeWebSocket should resubscribe to WebSocket',
     build: () {
-      // Подготавливаем кубит
+      // Prepare the cubit
       final mockPairs = MockData.getInitialForexPairs();
 
-      // Мокируем необходимые методы
+      // Mock necessary methods
       when(mockRepository.getForexPairs()).thenAnswer((_) async => mockPairs);
       when(mockWsService.subscribeToSymbols(any, any)).thenAnswer((_) async {});
       when(mockWsService.unsubscribeFromAll()).thenAnswer((_) async {});
 
-      // Создаем кубит и загружаем данные
+      // Create cubit and load data
       cubit.loadForexPairs();
 
-      // Вызываем pauseWebSocket, чтобы установить WebSocket в paused
+      // Call pauseWebSocket to set WebSocket to paused
       cubit.pauseWebSocket();
 
-      // Очищаем предыдущие взаимодействия
+      // Clear previous interactions
       clearInteractions(mockWsService);
 
       return cubit;
     },
     act: (cubit) async {
-      // Вызываем метод, который тестируем
+      // Call the method we are testing
       await cubit.resumeWebSocket();
     },
-    expect: () => anything, // Игнорируем эмитированные состояния
+    expect: () => anything, // Ignore emitted states
     verify: (cubit) {
-      // Проверяем, что метод subscribeToSymbols был вызван
+      // Verify that the subscribeToSymbols method was called
       verify(mockWsService.subscribeToSymbols(any, any)).called(1);
     },
   );

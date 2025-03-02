@@ -1,5 +1,4 @@
 import 'package:freezed_annotation/freezed_annotation.dart';
-import 'package:json_annotation/json_annotation.dart';
 
 part 'forex_update_ws_model.freezed.dart';
 part 'forex_update_ws_model.g.dart';
