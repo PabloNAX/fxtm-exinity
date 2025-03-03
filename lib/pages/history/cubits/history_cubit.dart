@@ -3,6 +3,7 @@
 import 'package:flutter_bloc/flutter_bloc.dart';
 import '../../../core/exceptions/app_error.dart';
 import '../../../core/services/error_service.dart';
+import '../../../data/models/candle_data.dart';
 import '../../../data/repositories/forex_repository.dart';
 import 'history_state.dart';
 
@@ -18,7 +19,13 @@ class HistoryCubit extends Cubit<HistoryState> {
     required int from,
     required int to,
   }) async {
-    emit(HistoryLoading());
+    // Get previous data if available
+    List<CandleData>? previousData;
+    if (state is HistoryLoaded) {
+      previousData = (state as HistoryLoaded).data;
+    }
+
+    emit(HistoryLoading(previousData: previousData));
 
     try {
       final historicalData = await _forexRepository.getHistoricalData(

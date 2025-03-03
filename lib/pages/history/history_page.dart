@@ -1,7 +1,4 @@
 // lib/src/history/history_page.dart
-
-/// Page for displaying historical data of a specific forex pair, including charts and date range selection.
-/// This page manages the loading of historical data, error handling, and user interactions for selecting date ranges and resolutions.
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import '../../core/ui/error_ui.dart';
@@ -14,6 +11,8 @@ import 'widgets/date_range_selector.dart';
 import 'widgets/forex_chart.dart';
 import 'widgets/resolution_selector.dart';
 
+/// Page for displaying historical data of a specific forex pair, including charts and date range selection.
+/// This page manages the loading of historical data, error handling, and user interactions for selecting date ranges and resolutions.
 class HistoryPage extends StatefulWidget {
   final ForexPair forexPair;
   final ForexRepository forexRepository;
@@ -61,93 +60,108 @@ class _HistoryPageState extends State<HistoryPage> {
             backgroundColor: Colors.white,
             foregroundColor: Colors.black,
           ),
-          body: BlocConsumer<HistoryCubit, HistoryState>(
-            listener: (context, state) {
-              // Show error when error state is emitted
-              if (state is HistoryError) {
-                ErrorUI.showSnackBar(context, state.error);
-              }
-            },
-            builder: (context, state) {
-              if (state is HistoryInitial) {
-                _loadData(context);
-                return const Center(
-                    child: CircularProgressIndicator(color: Colors.green));
-              } else if (state is HistoryLoading) {
-                return const Center(
-                    child: CircularProgressIndicator(color: Colors.green));
-              } else if (state is HistoryLoaded) {
-                if (state.data.isNotEmpty) {
-                  _startDate = state.data.first.date;
-                  _endDate = state.data.last.date;
-                }
-
-                return Column(
-                  children: [
-                    ChartHeader(
-                      symbol: widget.forexPair.symbol,
-                      dateRange: '',
-                    ),
-                    DateRangeSelector(
-                      initialStartDate: _startDate,
-                      initialEndDate: _endDate,
-                      onDateRangeChanged: (start, end) {
-                        setState(() {
-                          _startDate = start;
-                          _endDate = end;
-                        });
+          body: Column(
+            children: [
+              ChartHeader(
+                symbol: widget.forexPair.symbol,
+                dateRange: '',
+              ),
+              DateRangeSelector(
+                initialStartDate: _startDate,
+                initialEndDate: _endDate,
+                onDateRangeChanged: (start, end) {
+                  setState(() {
+                    _startDate = start;
+                    _endDate = end;
+                  });
+                  _loadData(context);
+                },
+              ),
+              ResolutionSelector(
+                currentResolution: _currentResolution,
+                onResolutionChanged: (resolution) {
+                  setState(() {
+                    _currentResolution = resolution;
+                  });
+                  _loadData(context);
+                },
+              ),
+              const SizedBox(height: 16),
+              // Only wrap the chart area with BlocConsumer
+              Expanded(
+                child: Padding(
+                  padding: const EdgeInsets.all(8.0),
+                  child: BlocConsumer<HistoryCubit, HistoryState>(
+                    listener: (context, state) {
+                      if (state is HistoryError) {
+                        ErrorUI.showSnackBar(context, state.error);
+                      }
+                    },
+                    builder: (context, state) {
+                      if (state is HistoryInitial) {
                         _loadData(context);
-                      },
-                    ),
-                    ResolutionSelector(
-                      currentResolution: _currentResolution,
-                      onResolutionChanged: (resolution) {
-                        setState(() {
-                          _currentResolution = resolution;
-                        });
-                        _loadData(context);
-                      },
-                    ),
-                    const SizedBox(height: 16),
-                    Expanded(
-                      child: Padding(
-                        padding: const EdgeInsets.all(8.0),
-                        child: ForexChart(
+                        return const Center(
+                          child: CircularProgressIndicator(color: Colors.green),
+                        );
+                      } else if (state is HistoryLoading) {
+                        return Stack(
+                          children: [
+                            // Show previous chart data if available
+                            if (state.previousData != null &&
+                                state.previousData!.isNotEmpty)
+                              ForexChart(
+                                data: state.previousData!,
+                                resolution: _currentResolution,
+                              )
+                            else
+                              Container(color: Colors.grey.shade100),
+                            // Show loading indicator on top
+                            Container(
+                              color: Colors.white.withOpacity(0.5),
+                              child: const Center(
+                                child: CircularProgressIndicator(
+                                    color: Colors.green),
+                              ),
+                            ),
+                          ],
+                        );
+                      } else if (state is HistoryLoaded) {
+                        return ForexChart(
                           data: state.data,
                           resolution: _currentResolution,
-                        ),
-                      ),
-                    ),
-                    const SizedBox(height: 16),
-                  ],
-                );
-              } else if (state is HistoryError) {
-                return Center(
-                  child: Column(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: [
-                      const Text(
-                        'Failed to load data',
-                        style: TextStyle(color: Colors.red),
-                      ),
-                      const SizedBox(height: 16),
-                      ElevatedButton(
-                        style: ElevatedButton.styleFrom(
-                          backgroundColor: Colors.green,
-                          foregroundColor: Colors.white,
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(8),
+                        );
+                      } else if (state is HistoryError) {
+                        return Center(
+                          child: Column(
+                            mainAxisAlignment: MainAxisAlignment.center,
+                            children: [
+                              const Text(
+                                'Failed to load data',
+                                style: TextStyle(color: Colors.red),
+                              ),
+                              const SizedBox(height: 16),
+                              ElevatedButton(
+                                style: ElevatedButton.styleFrom(
+                                  backgroundColor: Colors.green,
+                                  foregroundColor: Colors.white,
+                                  shape: RoundedRectangleBorder(
+                                    borderRadius: BorderRadius.circular(8),
+                                  ),
+                                ),
+                                onPressed: () => _loadData(context),
+                                child: const Text('Retry'),
+                              ),
+                            ],
                           ),
-                        ),
-                        onPressed: () => _loadData(context),
-                        child: const Text('Retry'),
-                      ),
-                    ],
+                        );
+                      }
+                      return Container();
+                    },
                   ),
-                );
-              }
-              return Container();
-            },
+                ),
+              ),
+              const SizedBox(height: 16),
+            ],
           ),
         );
       }),

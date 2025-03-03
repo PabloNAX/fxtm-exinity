@@ -4,7 +4,6 @@
 
 Flutter version 3.24.5
 
-
 The freezed and mockito generated code should be first run with build_runner:
 
 `dart run build_runner build --delete-conflicting-outputs && flutter pub get`

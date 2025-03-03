@@ -10,7 +10,14 @@ abstract class HistoryState extends Equatable {
 
 class HistoryInitial extends HistoryState {}
 
-class HistoryLoading extends HistoryState {}
+class HistoryLoading extends HistoryState {
+  final List<CandleData>? previousData;
+
+  HistoryLoading({this.previousData});
+
+  @override
+  List<Object> get props => previousData != null ? [previousData!] : [];
+}
 
 class HistoryLoaded extends HistoryState {
   final List<CandleData> data;
