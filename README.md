@@ -13,7 +13,7 @@ you can change the api keys or prod/mock env in .env file.
 I added .env and generated files (.freezed, .g) to github for the sake of the time.
 
 ## Notes:
-I didn't test the Candles API in real time since it's a premium feature, but I set up a mock environment with sample data to verify the UI charts. Also, the WebSocket for Finhub may not work on weekends or might have delays since the Forex market is closed. To account for this, I implemented a mock WebSocket as well. I haven't tested it with real data yet, but I expect it should work.
+I didn't test the Candles API in real time since it's a premium feature(it is respond with 403), but I set up a mock environment with sample data to verify the UI charts. Also, the WebSocket for Finhub may not work on weekends or might have delays since the Forex market is closed. To account for this, I implemented a mock WebSocket as well. I haven't tested it with real data yet, but I expect it should work.
 
 
 ## Please read the `DOC.md` for documentation and arch explanation
