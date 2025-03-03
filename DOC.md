@@ -97,6 +97,6 @@ Code Coverage
 - Optimize WebSocket client and WebSocket service
 - Improve error handling and internet connectivity check for WebSocket
 - Implement localization with all text stored in dedicated language files
-- Add component-specific loaders instead of whole-page loading indicators
+- Add component-specific annimation for charts instead of loader indicators
 - Implement better caching mechanism using local DB (Hive)
 - Fix code linter issues
